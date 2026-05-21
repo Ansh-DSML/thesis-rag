@@ -27,6 +27,7 @@ hub/
 models/
 hf_cache/
 model_cache/
+.hf_cache/  
 
 # Specific model weight file extensions (safety net)
 *.bin
