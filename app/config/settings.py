@@ -159,7 +159,7 @@ class Settings(BaseSettings):
         ssl_cert_reqs=none disables cert verification (Redis Cloud self-signed).
         """
         return (
-            f"rediss://:{self.redis_cloud_password}"
+            f"redis://:{self.redis_cloud_password}"
             f"@{self.redis_cloud_host}:{self.redis_cloud_port}/0"
             f"?ssl_cert_reqs=none"
         )
