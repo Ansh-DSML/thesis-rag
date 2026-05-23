@@ -150,6 +150,7 @@ class AnswerGenerator:
         chunks: list[ScoredChunk],
         session_id: str,
         router_output: Optional[RouterOutput] = None,
+        compressed_context: Optional[str] = None,
     ) -> tuple[str, list[Citation], int]:
         """
         Generate an answer for the given query using reranked chunks.
@@ -179,7 +180,11 @@ class AnswerGenerator:
                 )
 
             # ── Step 2: Format chunks into context string ─────────────────────
-            formatted_context, citation_keys = format_chunks_for_context(chunks)
+            if compressed_context:
+                formatted_context = compressed_context
+                citation_keys = [sc.chunk.citation_key for sc in chunks]
+            else:
+                formatted_context, citation_keys = format_chunks_for_context(chunks)
 
             # ── Step 3: Retrieve chat history ─────────────────────────────────
             chat_history = ""

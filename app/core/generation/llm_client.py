@@ -1,38 +1,16 @@
 """
 app/core/generation/llm_client.py
 
-Async Gemini LLM client wrapper.
+Async Gemini LLM client using the new google-genai SDK.
+(google.generativeai is deprecated — this uses google.genai instead)
 
-Wraps google-generativeai with:
-  - Singleton model instances (loaded once at startup)
-  - Async generation with generate_content_async
-  - Tenacity retry: 3 attempts, exponential backoff (2s → 4s → 8s)
-  - Token usage logging on every call
-  - Structured response: text + token_count
+Two model roles:
+  router : fast classification calls  (Prompt 1)
+  main   : quality generation calls   (Prompt 2 + Prompt 4)
 
-Two model roles (from settings):
-  llm_model_router : fast calls — Prompt 1 (router)
-  llm_model_main   : quality calls — Prompt 2 (HyDE) + Prompt 4 (answer)
-
-Usage:
-    from app.core.generation.llm_client import get_llm_client
-    client = get_llm_client()
-
-    # Single-turn call (router, HyDE)
-    response = await client.complete(
-        prompt="...",
-        role="router",          # uses llm_model_router
-    )
-
-    # Answer generation (with system prompt injected automatically)
-    response = await client.complete(
-        prompt="...",
-        role="main",            # uses llm_model_main
-        use_system_prompt=True,
-    )
-
-    print(response.text)
-    print(response.token_count)
+Free tier note:
+  gemini-2.5-flash  → available free (5 RPM, 250K TPM, 20 RPD)
+  gemini-2.5-pro    → NOT available on free tier (0/0 limits)
 """
 
 from __future__ import annotations
@@ -46,30 +24,24 @@ from tenacity import (
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    before_sleep_log,
 )
 
 from app.config.settings import get_settings
 from app.core.generation.prompts.system_prompt import get_system_prompt
 from app.utils.logger import get_logger
 
-log = get_logger(__name__)
+log      = get_logger(__name__)
 settings = get_settings()
 
 ModelRole = Literal["main", "router"]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# RESPONSE DATACLASS
-# ══════════════════════════════════════════════════════════════════════════════
-
 @dataclass
 class LLMResponse:
-    """Structured response from a Gemini LLM call."""
     text: str
-    token_count: int          # total tokens used (prompt + output)
-    prompt_tokens: int = 0    # input tokens
-    output_tokens: int = 0    # generated tokens
+    token_count: int = 0
+    prompt_tokens: int = 0
+    output_tokens: int = 0
     model: str = ""
     role: ModelRole = "main"
 
@@ -78,97 +50,56 @@ class LLMResponse:
         return not self.text or not self.text.strip()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# GEMINI CLIENT
-# ══════════════════════════════════════════════════════════════════════════════
-
 class GeminiClient:
     """
-    Async wrapper around google-generativeai.
-
-    Maintains two GenerativeModel instances:
-      _router_model : for Prompt 1 (router) — fast
-      _main_model   : for Prompt 2 (HyDE) + Prompt 4 (answer) — quality
-
-    Both are initialised lazily on first use (not at import time).
-    System prompt is injected into _main_model at construction time.
+    Async wrapper around google-genai SDK.
+    Singleton — get via get_llm_client().
     """
 
     def __init__(self) -> None:
-        self._router_model = None
-        self._main_model = None
+        self._client      = None
         self._initialised = False
 
     def _initialise(self) -> None:
-        """Load Gemini models. Called once on first complete() call."""
         if self._initialised:
             return
-
         try:
-            import google.generativeai as genai
+            from google import genai
         except ImportError:
-            log.error(
-                "google_generativeai_not_installed",
-                fix="pip install google-generativeai",
-            )
+            log.error("google_genai_not_installed", fix="pip install google-genai")
             raise
 
         if not settings.gemini_api_key:
-            raise ValueError(
-                "GEMINI_API_KEY is not set in .env. "
-                "Get your key from https://aistudio.google.com/app/apikey"
-            )
+            raise ValueError("GEMINI_API_KEY not set in .env")
 
-        genai.configure(api_key=settings.gemini_api_key)
-
-        # Router model — no system prompt (prompt is self-contained)
-        self._router_model = genai.GenerativeModel(
-            model_name=settings.llm_model_router,
-        )
-
-        # Main model — system prompt injected at construction
-        self._main_model = genai.GenerativeModel(
-            model_name=settings.llm_model_main,
-            system_instruction=get_system_prompt(),
-        )
-
+        self._client = genai.Client(api_key=settings.gemini_api_key)
         self._initialised = True
         log.info(
-            "gemini_models_loaded",
+            "gemini_client_initialised",
             router_model=settings.llm_model_router,
             main_model=settings.llm_model_main,
         )
 
-    def _get_model(self, role: ModelRole):
-        self._initialise()
-        return self._router_model if role == "router" else self._main_model
-
-    def _build_generation_config(self, role: ModelRole, max_tokens: Optional[int] = None):
-        """Build Gemini GenerationConfig for a given role."""
-        try:
-            import google.generativeai as genai
-        except ImportError:
-            raise
-
-        return genai.types.GenerationConfig(
-            max_output_tokens=max_tokens or settings.llm_max_tokens,
-            temperature=settings.llm_temperature,
-            candidate_count=1,
-        )
-
-    # ── Core retry wrapper ────────────────────────────────────────────────────
+    def _get_model_name(self, role: ModelRole) -> str:
+        return settings.llm_model_router if role == "router" else settings.llm_model_main
 
     async def _call_with_retry(
-        self,
-        model,
-        prompt: str,
-        generation_config,
-    ):
-        """
-        Call Gemini with tenacity retry.
-        3 attempts, exponential backoff: 2s → 4s → 8s.
-        Retries on any exception (rate limits, transient errors, timeouts).
-        """
+    self, model_name, prompt, system_instruction, max_tokens, disable_thinking=False
+):
+        from google.genai import types
+
+        # Disable thinking for router — it produces truncated JSON
+        # Keep thinking for main — produces better answers
+        thinking_config = None
+        if disable_thinking:
+            thinking_config = types.ThinkingConfig(thinking_budget=0)
+
+        config = types.GenerateContentConfig(
+            max_output_tokens=max_tokens,
+            temperature=settings.llm_temperature,
+            system_instruction=system_instruction,
+            thinking_config=thinking_config,
+        )
 
         @retry(
             stop=stop_after_attempt(settings.llm_max_retries),
@@ -178,49 +109,41 @@ class GeminiClient:
         )
         async def _attempt():
             return await asyncio.wait_for(
-                model.generate_content_async(
+                self._client.aio.models.generate_content(
+                    model=model_name,
                     contents=prompt,
-                    generation_config=generation_config,
+                    config=config,
                 ),
                 timeout=settings.llm_timeout_seconds,
             )
 
         return await _attempt()
 
-    # ── Public API ────────────────────────────────────────────────────────────
-
     async def complete(
         self,
         prompt: str,
         role: ModelRole = "main",
         max_tokens: Optional[int] = None,
+        disable_thinking: bool = False,      # ← ADD THIS PARAMETER
     ) -> LLMResponse:
-        """
-        Send a prompt to Gemini and return a structured LLMResponse.
-
-        Args:
-            prompt:     Complete prompt string (system prompt already injected
-                        into the model for role='main').
-            role:       'main' → llm_model_main (answer generation, HyDE)
-                        'router' → llm_model_router (query classification)
-            max_tokens: Override max output tokens. None = use settings value.
-
-        Returns:
-            LLMResponse with .text and .token_count populated.
-
-        Raises:
-            Exception if all retry attempts fail.
-        """
-        model = self._get_model(role)
-        gen_config = self._build_generation_config(role, max_tokens)
+        self._initialise()
+        model_name   = self._get_model_name(role)
+        system_instr = get_system_prompt() if role == "main" else None
+        tokens       = max_tokens or settings.llm_max_tokens
 
         try:
-            response = await self._call_with_retry(model, prompt, gen_config)
+            response = await self._call_with_retry(
+                model_name=model_name,
+                prompt=prompt,
+                system_instruction=system_instr,
+                max_tokens=tokens,
+                disable_thinking=disable_thinking,   # ← ADD THIS
+            )
         except Exception as exc:
             log.error(
                 "llm_call_failed",
                 role=role,
-                model=settings.llm_model_main if role == "main" else settings.llm_model_router,
+                model=model_name,
                 error=str(exc),
                 prompt_preview=prompt[:100],
             )
@@ -229,27 +152,22 @@ class GeminiClient:
         # Extract text
         text = ""
         try:
-            text = response.text
-        except (AttributeError, ValueError):
-            # Handle blocked/empty responses
+            text = response.text or ""
+        except Exception:
             if response.candidates:
-                parts = response.candidates[0].content.parts
-                text = " ".join(p.text for p in parts if hasattr(p, "text"))
-            log.warning("llm_response_extraction_fallback", role=role)
+                for part in response.candidates[0].content.parts:
+                    if hasattr(part, "text") and part.text:
+                        text += part.text
 
         # Extract token usage
-        prompt_tokens = 0
-        output_tokens = 0
-        total_tokens  = 0
+        prompt_tokens = output_tokens = total_tokens = 0
         try:
-            usage = response.usage_metadata
+            usage         = response.usage_metadata
             prompt_tokens = usage.prompt_token_count or 0
             output_tokens = usage.candidates_token_count or 0
             total_tokens  = usage.total_token_count or (prompt_tokens + output_tokens)
-        except AttributeError:
-            total_tokens = len(prompt.split()) + len(text.split())  # rough fallback
-
-        model_name = settings.llm_model_main if role == "main" else settings.llm_model_router
+        except Exception:
+            total_tokens = len(prompt.split()) + len(text.split())
 
         log.info(
             "llm_call_complete",
@@ -270,15 +188,11 @@ class GeminiClient:
         )
 
     async def count_tokens(self, text: str, role: ModelRole = "main") -> int:
-        """
-        Count tokens for a text string using Gemini's token counter.
-        More accurate than tiktoken for Gemini models.
-        Falls back to approximate count on error.
-        """
         try:
-            model = self._get_model(role)
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, model.count_tokens, text
+            self._initialise()
+            result = await self._client.aio.models.count_tokens(
+                model=self._get_model_name(role),
+                contents=text,
             )
             return result.total_tokens
         except Exception:
@@ -286,23 +200,11 @@ class GeminiClient:
             return count_tokens_approx(text)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SINGLETON
-# ══════════════════════════════════════════════════════════════════════════════
-
 _client_instance: Optional[GeminiClient] = None
 
 
 def get_llm_client() -> GeminiClient:
-    """
-    Return the shared GeminiClient singleton.
-    Models are initialised lazily on first complete() call.
-
-    Usage in any pipeline component:
-        from app.core.generation.llm_client import get_llm_client
-        client = get_llm_client()
-        response = await client.complete(prompt, role="router")
-    """
+    """Return the shared GeminiClient singleton."""
     global _client_instance
     if _client_instance is None:
         _client_instance = GeminiClient()

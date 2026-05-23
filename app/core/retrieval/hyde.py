@@ -225,7 +225,8 @@ class HyDEExpander:
                 response = await self._llm.complete(
                     prompt=prompt,
                     role="main",
-                    max_tokens=250,     # 100–150 words + some buffer
+                    max_tokens=600,     # 100–150 words + some buffer
+                    disable_thinking=True,
                 )
                 if response.is_empty:
                     log.warning("hyde_llm_empty_response", query_preview=query[:60])

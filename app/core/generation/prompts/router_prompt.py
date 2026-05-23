@@ -52,21 +52,32 @@ algorithm    — Asks for a step-by-step algorithm description or pseudocode.
                Example: "Explain the HyDE retrieval algorithm step by step."
 
 ━━━ ENTITY TYPES TO EXTRACT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Extract named entities from the query that can narrow retrieval:
-  • Algorithms / optimisers    : "PSO", "GA", "Adam", "ResNet"
-  • Medical conditions         : "diabetic retinopathy", "glaucoma", "DR"
-  • Loss functions / metrics   : "focal loss", "F1 score", "AUC", "MSE"
-  • Dataset names              : "DRIVE", "STARE", "IDRiD"
-  • Specific methods / concepts: "feature selection", "SMOTE", "HNSW"
-  • Chapter references         : if query mentions "methodology chapter" → chapter_filter=3
+Extract SPECIFIC named entities only. Never extract generic terms like "algorithm" or "model".
+
+  • Bio-inspired algorithms : "PSO", "GA", "DE", "ABC", "GWO", "Firefly",
+                              "Particle Swarm Optimisation", "Genetic Algorithm",
+                              "Differential Evolution", "Artificial Bee Colony",
+                              "Grey Wolf Optimizer", "Firefly Algorithm"
+  • Deep learning models    : "EfficientNet", "EfficientNet-B4", "ResNet", "VGG"
+  • Medical conditions      : "diabetic retinopathy", "DR", "glaucoma", "lesion"
+  • Loss / metrics          : "focal loss", "cross-entropy", "AUC", "F1", "MCC"
+  • Dataset names           : "DRIVE", "STARE", "IDRiD", "MESSIDOR", "APTOS"
+  • Architecture names      : "Architecture 1", "Architecture 2", "Phase 1", "Phase 2"
+
+CRITICAL RULE: If the query uses a GENERIC term, map it to SPECIFIC names.
+  "bio algorithms"   → ["PSO", "GA", "DE", "ABC", "GWO", "Firefly"]
+  "deep learning"    → extract specific model names if mentioned
+  "performance"      → extract specific metrics if mentioned (AUC, F1)
+  Never put "bio algorithms", "model", "method" in the entities list.
 
 ━━━ ROUTING FLAGS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 use_graph  → true  if entities were found AND query is about relationships
                     between concepts (e.g. "how does X relate to Y")
            → false for broad synthesis, factual lookups, or equation queries
 
-use_hyde   → true  for factual, comparative, synthesis, methodology, algorithm
-           → ALWAYS false for equation (exact symbolic match needed)
+use_hyde   → true  in almost ALL cases — set false ONLY for equation queries
+           → false for equation (exact symbolic match needed, semantic expansion hurts)
+           → DO NOT set false for factual, comparative, synthesis, methodology, algorithm
 
 source_filter → "thesis"  if query is clearly about the author's own work
                            ("in your thesis", "your methodology", "your results")
