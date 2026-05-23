@@ -49,8 +49,9 @@ class Settings(BaseSettings):
 
     # ── LLM — Gemini ──────────────────────────────────────────────────────────
     gemini_api_key: str = ""
-    llm_model_main: str = "gemini-2.5-pro"      # Prompt 4 — answer generation
-    llm_model_router: str = "gemini-2.5-pro"    # Prompt 1 — query routing (fast/cheap)
+    groq_api_key: str = ""
+    llm_model_main: str = "llama-3.3-70b-versatile"      # Prompt 4 — answer generation
+    llm_model_router: str = "gemini-2.5-flash"    # Prompt 1 — query routing (fast/cheap)
     llm_max_tokens: int = 2048
     llm_temperature: float = 0.0                # Low = factual, deterministic
     llm_timeout_seconds: int = 60
@@ -73,7 +74,7 @@ class Settings(BaseSettings):
     # ── Reranker (BGE cross-encoder) ───────────────────────────────────────────
     reranker_model: str = "BAAI/bge-reranker-large"
     reranker_top_k_input: int = 20      # Chunks fed into cross-encoder
-    reranker_top_k_output: int = 5      # Chunks returned after reranking
+    reranker_top_k_output: int = 8     # Chunks returned after reranking
     # Equation chunks get a +2.0 bonus on equation_lookup queries
     reranker_equation_boost: float = 2.0
 

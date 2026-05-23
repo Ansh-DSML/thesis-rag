@@ -80,7 +80,6 @@ class QueryRouter:
                     prompt=prompt,
                     role="router",
                     max_tokens=500,     # RouterOutput JSON is small
-                    disable_thinking=True,
                 )
                 raw_text = llm_response.text
             except Exception as exc:
