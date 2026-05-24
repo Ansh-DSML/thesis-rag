@@ -1,0 +1,466 @@
+[
+  {
+    "id": 1,
+    "chapter": "Chapter 1 – Introduction",
+    "topic": "Background / Global Burden",
+    "question": "What is the estimated global prevalence of vision impairment and blindness according to WHO, and what proportion of cases are considered preventable?",
+    "answer": "According to the World Health Organization (WHO), approximately 2.2 billion people worldwide live with vision impairment or blindness. Nearly half of these cases are either preventable or have not been adequately addressed. The burden is heavily skewed toward low- and middle-income countries (LMICs), where over 90% of the world's visually disabled population resides. The International Agency for the Prevention of Blindness (IAPB) further projects that by 2050, the number of people with moderate-to-severe visual impairment will rise to 474 million, and the blind population will reach 61 million. Vision impairment also carries a significant economic cost, resulting in USD 411 billion in lost global productivity annually.",
+    "source_chapters": ["Chapter 1"]
+  },
+  {
+    "id": 2,
+    "chapter": "Chapter 1 – Introduction",
+    "topic": "Disease Background – AMD",
+    "question": "Describe the two types of Age-Related Macular Degeneration (AMD), their prevalence, and how they differ pathologically and clinically.",
+    "answer": "AMD is a progressive degenerative disease of the macula affecting people over 50. It currently affects 196 million people worldwide, projected to reach 288 million by 2040. Pathologically, AMD begins with extracellular deposits (drusen) accumulating between the retinal pigment epithelium (RPE) and Bruch's membrane, causing metabolic dysfunction and progressive RPE atrophy. The two types are: (1) Dry AMD (geographic atrophy) — accounts for 85–90% of cases, characterized by soft/confluent drusen and RPE atrophy, with slower progression; (2) Wet AMD (neovascular AMD) — accounts for 10–15% of cases but is responsible for ~90% of severe vision loss from AMD. It involves sub-RPE neovascular membranes that leak, proliferate, and bleed, causing retinal edema, haemorrhages, and rapid photoreceptor death. Wet AMD can be partially stabilized by anti-VEGF therapy when caught early. On fundus imaging, AMD presents as drusen (yellowish spots), RPE hypo/hyperpigmentation, geographic atrophy zones, and in wet AMD, subretinal fluid or haemorrhages.",
+    "source_chapters": ["Chapter 1"]
+  },
+  {
+    "id": 3,
+    "chapter": "Chapter 1 – Introduction",
+    "topic": "Disease Background – Glaucoma",
+    "question": "How does glaucoma cause vision loss, what is the cup-to-disc ratio (CDR), and what clinical classification is used in this thesis?",
+    "answer": "Glaucoma is the leading cause of irreversible blindness globally, affecting ~76 million individuals currently, projected to exceed 111 million by 2040. It causes progressive death of retinal ganglion cells (RGCs) and axonal degeneration, leading to peripheral visual field loss that is often unnoticed until extensive damage has occurred. The primary mechanism involves elevated intraocular pressure (IOP) that mechanically compresses the lamina cribrosa, impairing axoplasmic transport and triggering RGC apoptosis. The resulting structural change — optic disc cupping — is quantified by the cup-to-disc ratio (CDR); a CDR greater than 0.6 typically indicates further investigation. Other fundus findings include thin retinal nerve fibre layer (RNFL), neuroretinal rim notching, disc haemorrhages, and parapapillary atrophy. In this thesis, a binary clinical classification is used: Referable Glaucoma (RG) — patients requiring urgent specialist referral — and Non-Referable Glaucoma (NRG) — patients safe for routine monitoring. This mirrors a real-world tele-medicine screening triage scenario.",
+    "source_chapters": ["Chapter 1"]
+  },
+  {
+    "id": 4,
+    "chapter": "Chapter 1 – Introduction",
+    "topic": "Disease Background – Diabetic Retinopathy",
+    "question": "What are the five stages of Diabetic Retinopathy (DR) as used in this thesis, and what pathological changes characterize the progression from early to advanced disease?",
+    "answer": "Diabetic Retinopathy (DR) is the most common microvascular complication of diabetes and the leading cause of new-onset blindness in working-age adults. With 537 million people currently living with diabetes (projected 783 million by 2045), approximately 1/3 have some form of DR. The five stages per the International Clinical Diabetic Retinopathy Disease Severity Scale are: (1) No DR — no visible lesions; (2) Mild NPDR — few microaneurysms; (3) Moderate NPDR — more widespread vascular changes, haemorrhages, hard exudates, cotton wool spots; (4) Severe NPDR — defined by >20 retinal haemorrhages in all 4 quadrants, venous beading, and conspicuous IRMA (Intraretinal Microvascular Abnormalities); patients at 50% risk of progressing to PDR within 1 year; (5) Proliferative DR (PDR) — retinal neovascularisation that can lead to tractional retinal detachment. The thesis uses EyePACS/APTOS datasets with all five classes, noting that the extreme class imbalance (No DR:Severe ratio of ~10:1) is the primary algorithmic challenge.",
+    "source_chapters": ["Chapter 1"]
+  },
+  {
+    "id": 5,
+    "chapter": "Chapter 1 – Introduction",
+    "topic": "Limitations of Conventional Screening",
+    "question": "What are the three structural limitations of conventional human-based retinal disease screening that motivate the use of AI-based systems?",
+    "answer": "The thesis identifies three major structural limitations: (1) Workforce shortage — There is a global deficit of over 200,000 ophthalmologists, most critically in LMICs. For example, India has over 80 million diabetics but fewer than 20,000 registered ophthalmic practitioners — a ratio of 1 per 4,000 at-risk patients, making human-based population-scale screening infeasible. (2) Inter-observer variability — Even with formal grading schemes (e.g., Wisconsin Grading System), experienced ophthalmologists achieve only 60–80% agreement on DR grading, due to visual subjectivity, fatigue from high screening volumes, and challenges with borderline cases. (3) Resource and time constraints — An ophthalmologist can typically examine only 50–100 patients per day under ideal conditions, making it financially and logistically impossible to provide annual screening to all at-risk individuals at a population level. These three limitations collectively justify the development of AI-based retinal screening systems capable of consistent, scalable, automated diagnosis.",
+    "source_chapters": ["Chapter 1"]
+  },
+  {
+    "id": 6,
+    "chapter": "Chapter 1 – Introduction",
+    "topic": "Evolution of Computer-Aided Diagnosis",
+    "question": "How did computer-aided diagnosis in ophthalmology evolve from early rule-based systems to deep learning, and what was the landmark study that catalyzed the deep learning era?",
+    "answer": "Early computer-aided detection (CADe) systems developed in the 1990s–2000s relied on manually engineered pipelines: morphological image processing (matched filters for vessel segmentation, mathematical morphology for microaneurysm detection) followed by classical machine learning classifiers (SVM, Random Forest, k-NN). While these systems performed reasonably in controlled lab conditions, they had poor generalization to clinical images due to illumination variation, camera differences, and patient diversity. They also required domain experts to manually engineer disease-specific features for each new task, making them brittle and expensive to adapt. The advent of deep learning, particularly CNNs, marked a breakthrough. The seminal work by Gulshan et al. (Nature, 2016) demonstrated that a deep CNN trained on 128,175 retinal images could match the median ophthalmologist in DR detection sensitivity and specificity. This catalyzed a surge of CNN architectures (VGGNet, ResNet, DenseNet, EfficientNet, etc.) and later CNN-ViT hybrid models — forming the foundation for multi-expert frameworks like the HG-MEF proposed in this thesis.",
+    "source_chapters": ["Chapter 1"]
+  },
+  {
+    "id": 7,
+    "chapter": "Chapter 1 – Introduction",
+    "topic": "Vision Transformers",
+    "question": "Why are Vision Transformers (ViTs) particularly well-suited for retinal image analysis, and what specific advantages does self-attention offer over convolutional approaches?",
+    "answer": "Vision Transformers (ViTs), introduced by Dosovitskiy et al. in 2020, process images as sequences of fixed-size patches and apply multi-head self-attention to capture global relationships. Two specific reasons make ViTs well-suited for retinal analysis: (1) Long-range spatial dependency — Retinal lesions often have spatially distributed relationships that convolutional local receptive fields cannot capture, e.g., correlations between microaneurysm clusters in one quadrant and neovascularization in another, or between optic disc appearance and RNFL thickness. Self-attention can model any two patches regardless of spatial distance. (2) Inherent explainability — ViTs can generate attention maps highlighting the image patches most important to a prediction. These can be aligned with clinically annotated lesion maps to provide visual explanations critical for clinical acceptance. The thesis also uses Grad-CAM (Gradient-weighted Class Activation Mapping) for the CNN components of hybrid models, enabling explainability across both the convolutional and transformer portions of the architecture.",
+    "source_chapters": ["Chapter 1"]
+  },
+  {
+    "id": 8,
+    "chapter": "Chapter 1 – Introduction",
+    "topic": "Bio-Inspired Algorithms Overview",
+    "question": "List and briefly describe the six bio-inspired optimization algorithms used in HG-MEF-Bio, including the natural phenomenon each models and its specific role in the system.",
+    "answer": "The six bio-inspired algorithms and their roles are: (1) Firefly Algorithm (FA) — models bioluminescent signalling of fireflies; agents attract based on relative brightness (fitness). In HG-MEF-Bio, FA is integrated with Grad-CAM saliency to optimize EfficientNet-B4 channel attention weights, guiding feature channels toward diagnostically relevant retinal regions. (2) Grey Wolf Optimizer (GWO) — simulates the hierarchical hunting behaviour of grey wolf packs (alpha, beta, delta wolves). Used to optimize multi-way cross-attention blend weights in expert fusion layers. (3) Genetic Algorithm (GA) — inspired by Darwinian natural selection; evolves populations via selection, crossover, and mutation. Used to adaptively evolve per-class loss function weights during training, with a recall-floor constraint for DR. (4) Particle Swarm Optimization (PSO) — inspired by collective movement of bird flocks/fish schools. Used to optimize per-class decision thresholds, both during training (as SOL1 penalty loss) and post-training for clinical threshold calibration. (5) Artificial Bee Colony (ABC) — models honeybee foraging through Employed, Onlooker, and Scout bee phases. Used to optimize routing bias in the ABCGatedRoutingNetwork fusion gating. (6) Differential Evolution (DE) — gradient-free optimizer using differential mutation. Used to optimize per-expert feature scaling factors in the DEFeatureMixer fusion module.",
+    "source_chapters": ["Chapter 1"]
+  },
+  {
+    "id": 9,
+    "chapter": "Chapter 1 – Introduction",
+    "topic": "Problem Statement – Gaps",
+    "question": "What are the five clinical and technical gaps (Gap I–V) identified in the problem statement that the HG-MEF and HG-MEF-Bio architectures aim to address?",
+    "answer": "The five gaps are: (1) Gap I — Inter-class feature interference in unified models: Training a single network simultaneously on AMD, Glaucoma, and DR leads to gradient conflicts during backpropagation because each disease's relevant features (macular drusen, optic disc shape, retinal microvasculature) are anatomically distinct. In Phase-I testing, a unified ViT achieved only ~90–91% accuracy with Glaucoma at 78% accuracy. (2) Gap II — Critical minority class failure under class imbalance: Standard cross-entropy loss is dominated by majority class gradients, causing systematic failure on clinically critical rare classes. Architecture 1's Severe DR accuracy was only 39.3%, missing >60% of patients needing immediate treatment. (3) Gap III — Static fusion without learnable routing: Existing ensemble methods use fixed weight averaging without input-content-based dynamic routing, unable to exploit expert specialization. AMD/Cataract images were misrouted to the Glaucoma expert in Architecture 1. (4) Gap IV — Absence of bio-inspired algorithms within deep training loops: Prior bio-inspired applications in retinal AI were limited to pre-processing or post-hoc hyperparameter tuning; no prior work integrated multiple bio-inspired algorithms simultaneously within a deep learning training loop. (5) Gap V — Clinical trust, calibration, and explainability: Deep networks are poorly calibrated on imbalanced datasets; over-confident wrong predictions are dangerous clinically. No prior retinal classification work used a differentiable Expected Calibration Error (ECE) loss term during training.",
+    "source_chapters": ["Chapter 1"]
+  },
+  {
+    "id": 10,
+    "chapter": "Chapter 1 – Introduction",
+    "topic": "Objectives",
+    "question": "What are the eight research objectives of this thesis, and how do they map to the proposed system components?",
+    "answer": "The eight objectives are: (1) Formulate disease-specific preprocessing pipelines and clinically-driven data augmentation strategies for AMD, Glaucoma, and DR. (2) Develop three disease-specific expert models (EnhancedAMDModel, HybridGlaucomaModel, HybridDRModel — Architecture 1) using hybrid CNN-ViT architectures with multi-way cross-attention. (3) Design and train the HG-MEF fusion network with learned gating, hierarchical feature/decision fusion, and GateDiversityLoss — serving as the non-bio-inspired baseline. (4) Develop Bio-Upgraded expert models (Architecture 2: EnhancedAMDModelBio, HybridGlaucomaModelBio, EnhancedDRModelBio) incorporating FA+GradCAM, GWO, GA, PSO, ABC, and DE as training-loop mechanisms. (5) Design and implement three DR-specific solutions: SOL1 (PSO in-training threshold penalization), SOL2 (GA recall-floor constraint), SOL3 (RecallAwareDiversityLoss) targeting minority class failure. (6) Design and train HG-MEF-Bio fusion model with ABCGatedRoutingNetwork, GWOUnifiedCrossAttention, DEFeatureMixer, learnable stream weights, and ECE calibration loss. (7) Thoroughly evaluate both architectures using per-class accuracy, macro/weighted F1, AUC-ROC, bio-algorithm convergence, calibration analysis, and ablation study. (8) Demonstrate system explainability using Grad-CAM and ViT attention maps, compare against clinical lesion annotations, and test cross-dataset generalization.",
+    "source_chapters": ["Chapter 1"]
+  },
+  {
+    "id": 11,
+    "chapter": "Chapter 2 – Literature Review",
+    "topic": "CNN Baseline Studies",
+    "question": "What performance plateau was observed in single-model CNN implementations for DR grading, and what does this reveal about the fundamental limitations of such approaches?",
+    "answer": "Andrab and Gupta's systematic review found a consistent performance plateau of approximately 90–92% accuracy in single-model CNN implementations for DR grading on EyePACS and Messidor datasets. This plateau was attributed to two core limitations: intra-class variations in retinal lesion morphology (the same severity grade can look visually different across patients) and ambiguity in distinguishing adjacent severity grades (e.g., Mild vs. Moderate NPDR). Critically, systems consistently failed on Severe NPDR — the most clinically dangerous class requiring immediate intervention. The Archana et al. DenseNet study achieved 94.2% overall but showed substantially lower per-class accuracy for Severe and Proliferative DR. Saputra & Saputra demonstrated that handcrafted GLCM texture features (89.1% accuracy) can capture global texture but fail to localize sparse, distributed microaneurysms and haemorrhages critical for severity assessment. These findings collectively establish that the minority class problem in DR grading is a persistent, architectural-level issue, not simply a data quantity problem.",
+    "source_chapters": ["Chapter 2"]
+  },
+  {
+    "id": 12,
+    "chapter": "Chapter 2 – Literature Review",
+    "topic": "CNN-ViT Hybrids",
+    "question": "What does the Zhang et al. (2025) study demonstrate about CNN vs. ViT vs. hybrid models for DR classification, and how does it motivate the backbone choice in this thesis?",
+    "answer": "Zhang et al. performed a comprehensive comparison of CNN, ViT, and hybrid architectures on APTOS 2019 for DR classification. The key finding was that pure CNN or pure ViT architectures both underperformed on medium-sized medical image datasets, while hybrid models consistently outperformed both alone, achieving 97.6% accuracy. CNNs provided beneficial inductive biases — translation equivariance and locality — that compensate for ViT's data hunger when training set sizes are limited. Hybrid models leveraged both local feature discrimination (CNN) and global contextual relationships (Transformer). Grad-CAM visualizations confirmed the hybrid model's attention focused on clinically meaningful regions (microaneurysm clusters, hard exudates). This directly motivates the thesis's use of ResNet-50 + ViT-B/16 as the dual backbone in all expert models: ResNet-50 provides spatially localized hierarchical feature embeddings complemented by ViT-B/16's global attention-based integration — avoiding the weaknesses of either architecture alone.",
+    "source_chapters": ["Chapter 2"]
+  },
+  {
+    "id": 13,
+    "chapter": "Chapter 2 – Literature Review",
+    "topic": "Ensemble Learning",
+    "question": "What did Ho et al. (2022) find about ensemble size and performance in retinal classification, and how does this insight shape the HG-MEF design?",
+    "answer": "Ho et al. investigated the relationship between ensemble size, model diversity, and classification performance for retinal images. Their key finding was a law of diminishing returns: adding more than four or five models to an ensemble produced no substantial performance improvement. This indicated that the limiting factor was not ensemble size but the quality of the fusion mechanism. Simply averaging more models cannot overcome a fundamentally weak fusion process. This insight directly shapes the HG-MEF design: rather than increasing the number of expert models (which Ho et al. showed yields diminishing returns), HG-MEF focuses on improving the fusion process through a learned gating network, hierarchical cross-attention fusion, and bio-optimized feature mixing (ABCGatedRoutingNetwork, GWOUnifiedCrossAttention, DEFeatureMixer in Architecture 2). The GateDiversityLoss further ensures the gating network maintains diverse, non-collapsed routing rather than degenerating to a simple average.",
+    "source_chapters": ["Chapter 2"]
+  },
+  {
+    "id": 14,
+    "chapter": "Chapter 2 – Literature Review",
+    "topic": "Multi-Disease Systems",
+    "question": "How does the Zhao et al. (2024) ResNet-Transformer system for multi-label retinal classification differ architecturally from the HG-MEF approach, and what gap does this expose?",
+    "answer": "Zhao et al. achieved 92.86% mAP and 97.27% AUC on the ODIR-5K dataset for eight disease types using a sequential ResNet-Transformer framework. Their novel idea was to use ResNet feature maps as spatial token sequences for a Transformer encoder, achieving high AUC scores. However, the system used a flat multi-label classification head applied to a single unified feature representation — all diseases were classified from the same shared feature space without disease-specific expert specialization. This is the fundamental architectural gap the thesis identifies: the Zhao et al. system does not allow each disease domain to develop maximally discriminative feature representations for its anatomically distinct lesion patterns (macular drusen for AMD, optic disc shape for Glaucoma, retinal microvasculature for DR). The HG-MEF expert-then-fuse paradigm explicitly addresses this by training three separate disease-specific expert networks on their respective datasets before fusing through a learned hierarchical network, achieving specialist-level per-disease accuracy while maintaining multi-disease output.",
+    "source_chapters": ["Chapter 2"]
+  },
+  {
+    "id": 15,
+    "chapter": "Chapter 2 – Literature Review",
+    "topic": "Bio-Inspired in Medical Imaging",
+    "question": "How was PSO applied in prior retinal disease literature (Singh et al., 2024), and in what way does the thesis significantly extend its application?",
+    "answer": "Singh et al. (2024) applied a customised PSO (CPSO) to feature selection for Glaucoma classification: PSO was used to identify the optimal subset of handcrafted morphological features (optic disc area, CDR, rim width) from a larger feature set, before feeding the selected features to classical machine learning classifiers (SVM, KNN, Decision Tree, Random Forest), achieving 94.2% accuracy on DRISHTI-GS. The fundamental limitation was reliance on handcrafted features — PSO could only optimize within the space of manually defined measurements, unable to access deep learned representations. The PSO-DNN work (2023) extended PSO into deep learning but only for global hyperparameter optimization (learning rate, momentum) uniformly affecting all parameters. The thesis extends PSO's role in three qualitatively distinct and more powerful ways: (1) In-training decision threshold optimization as a co-evolutionary feedback loop (SOL1 — ThresholdPenaltyLoss applied during DR training); (2) Post-training per-class boundary calibration to clinical specifications (maximizing sensitivity at controlled specificity); (3) Asymmetric threshold setting aligned with clinical triage goals (NRG=0.101, RG=0.854 for Glaucoma; Severe DR=0.097, Proliferative DR=0.950).",
+    "source_chapters": ["Chapter 2"]
+  },
+  {
+    "id": 16,
+    "chapter": "Chapter 2 – Literature Review",
+    "topic": "Research Gaps",
+    "question": "What are the five research gaps identified in the literature review, and which specific component of HG-MEF/HG-MEF-Bio addresses each gap?",
+    "answer": "The five gaps and their architectural solutions are: (1) Gap 1 — No framework combines multi-disease classification with disease-specific expert specialization and dynamic gating. All prior systems were either flat multi-label models or isolated single-disease experts. Addressed by: the expert-then-fuse paradigm with DiseaseSpecificGatingNetwork / ABCGatedRoutingNetwork. (2) Gap 2 — Bio-inspired algorithms have never been integrated simultaneously within a deep learning training loop across multiple architectural levels. Prior use was limited to pre-processing or post-hoc tuning. Addressed by: six concurrently deployed bio-inspired algorithms (FA, GWO, GA, PSO, ABC, DE) operating at attention weights, loss parameters, thresholds, routing biases, and feature scaling simultaneously. (3) Gap 3 — Minority class failure in DR grading is unresolved under real clinical imbalance; standard oversampling/augmentation/class-weighting alone are insufficient. Addressed by: SOL1 (PSO in-training penalty) + SOL2 (GA recall-floor constraint) + SOL3 (RecallAwareDiversityLoss). (4) Gap 4 — No published retinal classification system uses ECE calibration loss as a training-time objective. Addressed by: differentiable ECE loss at the HG-MEF-Bio fusion layer (λ=0.1). (5) Gap 5 — Learnable gating with entropy regularization has not been applied to multi-disease retinal ensemble fusion. Addressed by: GateDiversityLoss (entropy regularization on gate distributions) preventing routing collapse.",
+    "source_chapters": ["Chapter 2"]
+  },
+  {
+    "id": 17,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "System Architecture Overview",
+    "question": "Describe the expert-then-fuse paradigm and explain why it is architecturally superior to a naive multi-disease single model for retinal disease classification.",
+    "answer": "The expert-then-fuse paradigm consists of two stages: (1) Expert training — three disease-specific expert models (EnhancedAMDModelBio, HybridGlaucomaModelBio, EnhancedDRModelBio) are trained independently on their respective disease-specific datasets, allowing each model to develop maximally discriminative, task-specific feature representations without interference from other diseases. (2) Fusion — the independently trained expert models (with frozen backbones) are then combined through a learned hierarchical fusion network that integrates their feature vectors, probability outputs, and gate weights into a single unified multi-disease prediction. This is architecturally superior to a naive single model because: (a) It eliminates inter-class feature interference — in a single unified model, gradients from AMD supervision (sensitive to macular drusen) compete with DR gradients (sensitive to microaneurysms) and Glaucoma gradients (sensitive to optic disc shape), mutually canceling each other and preventing any single disease from being optimally classified. (b) It enables domain-specific preprocessing and augmentation strategies per disease. (c) The Architecture 1 quantitative validation confirmed that individual AMD experts achieved 97.75% accuracy vs. ~84% for the unified Phase-I ViT — a gap only explicable through elimination of inter-class feature interference.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 18,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "Datasets",
+    "question": "What datasets are used for each disease domain in Phase II, what are their class distributions, and what special challenge do the DR dataset distributions present?",
+    "answer": "Three publicly available datasets are used in Phase II: (1) AMD — AMDNet / HYAMD datasets with 4 classes: AMD, Cataract, Diabetes, Normal; approximately 4,000 total images with ~100 samples per class in the validation set (roughly balanced). Pre-organized train/val/test folders. (2) Glaucoma — REFUGE / ORIGA datasets with 2 binary classes: Non-Referable Glaucoma (NRG) and Referable Glaucoma (RG); approximately 7,700 total images with ~385 samples per class in validation. Unbalanced binary problem. (3) Diabetic Retinopathy — EyePACS / APTOS datasets with 5 severity classes: No_DR, Mild NPDR, Moderate NPDR, Severe NPDR, Proliferative DR; approximately 11,000 total images. The DR dataset presents the primary algorithmic challenge: a No_DR:Severe ratio of approximately 10:1, reflecting true clinical screening proportions. The validation set breakdown is: No_DR: 169, Mild: 108, Moderate: 155, Proliferative: 106, Severe: 69. This extreme class imbalance makes standard cross-entropy loss dominated by majority class gradients, causing systematic failure on the clinically critical Severe and Proliferative classes. A stratified 70/15/15 split with seed=42 was used for DR to ensure consistent class distribution across splits.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 19,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "Preprocessing",
+    "question": "Describe the Ben Graham preprocessing pipeline used for AMD and DR images and explain the mathematical basis of its light correction step.",
+    "answer": "The Ben Graham preprocessing pipeline was derived from the winning method of Kaggle's Diabetic Retinopathy detection competition. It consists of seven steps applied to the raw input image I ∈ ℝ^(H×W×3): (1) Gaussian Blur and Thresholding — image is blurred with kernel size 55, then a binary mask M is created by thresholding (M(x,y)=1 if GaussianBlur(I)(x,y) > 10, else 0); (2) Morphological Operations — closing then opening applied to M using a 15×15 elliptical structuring element to clean the mask; (3) Circular Crop — minimum enclosing circle of the largest contour is computed, a circular mask applied, background set to black, then resized to 512×512 using INTER_AREA interpolation; (4) Light Correction — the key step. The formula is: I_out = α·I + β·GaussianBlur(I, σ=10) + γ, where α=4, β=−4, γ=128. This is effectively a high-pass filter: by subtracting a heavily blurred version of the image (which captures global illumination) from the original, and scaling appropriately, local contrast around retinal lesions is amplified while global illumination gradients (due to camera and lighting variation) are removed. The constant γ=128 centers the output around a mid-grey level to avoid clipping artifacts. The Ben Graham pipeline is NOT used for Glaucoma because global illumination correction could alter the apparent CDR, introducing grading artifacts.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 20,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "Preprocessing – Glaucoma",
+    "question": "Why is a separate preprocessing pipeline used for Glaucoma images, and what does the CLAHE step on the green channel accomplish?",
+    "answer": "A separate preprocessing pipeline is required for Glaucoma because the primary diagnostic feature is the cup-to-disc ratio (CDR) — the ratio of vertical cup diameter to optic disc diameter. The Ben Graham pipeline's variable brightness adjustment (which modifies local illumination non-uniformly across the image) could alter the apparent CDR and introduce grading artifacts that corrupt this critical measurement. The Glaucoma pipeline therefore skips the light correction step entirely and applies only: (1) Retina masking — identical circular crop to steps 1–3 of Ben Graham (threshold → largest contour → minEnclosingCircle → crop → resize 512×512); (2) CLAHE on green channel — Contrast Limited Adaptive Histogram Equalization (CLAHE) with clip limit L=2.0 and tile grid size T=8×8 applied only to the green channel G ∈ ℝ^(512×512). CLAHE divides the image into small tiles and applies histogram equalization within each tile, with the clip limit preventing over-amplification of noise in low-contrast areas. The green channel is specifically selected because the optic disc and cup show maximum contrast in the green spectral range (due to haemoglobin absorption characteristics), making CDR measurement more accurate without globally distorting the spatial relationships needed for CDR assessment.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 21,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "Data Augmentation",
+    "question": "How is data augmentation applied in a class-aware manner for the DR dataset, and what is the rationale for the different multiplier values per class?",
+    "answer": "DR augmentation uses a class-aware approach with different augmentation multipliers M_c per class: No_DR: 0 (no additional augmented images), Moderate: 1×, Mild: 3×, Severe: 4×, Proliferative: 4×. The rationale: No_DR is already massively overrepresented (10:1 ratio vs. Severe), so further augmenting it would worsen the imbalance. Mild, Severe, and Proliferative classes are underrepresented, so 3–4× augmentation helps partially redress the class imbalance. Severe and Proliferative are the most clinically critical and fewest in number, justifying the highest multiplier. The augmentation pipeline for DR first applies CLAHE on the green channel, then: horizontal flip (p=0.5), vertical flip (p=0.5), rotation (±15°, p=0.7), Gaussian noise (var limit [0.01,0.03], p=0.4), elastic transform (alpha=0.5, sigma=40, p=0.2), random brightness-contrast (±0.2, p=0.7), and random size crop (512×512, scale=[0.9,1.0], p=0.7). Glaucoma augmentation is deliberately minimal (horizontal flip, ±5° rotation, ±0.1 brightness) to preserve optic disc morphology. AMD uses a uniform 2× augmentation with conservative geometric/color transforms.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 22,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "Backbone Architectures",
+    "question": "How does ResNet-50's residual connection mechanism work mathematically, and why does it address the vanishing gradient problem in deep networks?",
+    "answer": "ResNet-50 solves the vanishing gradient problem through residual (skip) connections. Each residual block computes: y = F(x, {W_i}) + x, where F(x, {W_i}) represents the stacked non-linear transformation (two or three convolutions with batch normalisation and ReLU activations), x is the identity shortcut connection, and y is the block output. If input and output dimensions differ, a projection shortcut is used: y = F(x, {W_i}) + W_s·x. The key insight is that during backpropagation, the gradient flows through both the residual path and the identity shortcut. The identity shortcut provides a direct, unobstructed path for gradients to flow backward through the network without being repeatedly multiplied by small values (which causes vanishing gradients in very deep networks). The network only needs to learn the residual mapping F(x) = y − x rather than the full mapping y = H(x), making it easier to learn near-identity mappings in layers that don't need major transformations. In the expert models, ResNet-50 generates a 2048-dimensional feature vector after global average pooling, then linearly projected to 768 dimensions for cross-attention fusion with ViT-B/16.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 23,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "Vision Transformer Architecture",
+    "question": "How does ViT-B/16 process a retinal fundus image, and what is the role of the [CLS] token in producing the final image representation?",
+    "answer": "ViT-B/16 processes images through the following pipeline: (1) Patch embedding — the 224×224 input image is divided into 14×14=196 non-overlapping patches of 16×16 pixels each. Each patch is linearly embedded to dimension d=768. (2) CLS token — a learnable [CLS] (classification) token is prepended to the sequence, creating a sequence of 197 tokens. Positional embeddings E_pos ∈ ℝ^(197×768) are added to retain spatial information: z_0 = [x_cls; x_1^p·E; ...; x_N^p·E] + E_pos. (3) Transformer encoder — the sequence passes through 12 Transformer encoder blocks. Each block applies: multi-head self-attention (z'_l = MSA(LN(z_{l-1})) + z_{l-1}) followed by a feed-forward MLP (z_l = MLP(LN(z'_l)) + z'_l), both with residual connections and layer normalisation. (4) Output — the [CLS] token output z_L^0 ∈ ℝ^768 from the final encoder block serves as the global image representation. The CLS token effectively aggregates global image information because, through self-attention, it attends to all 196 patch tokens simultaneously across all 12 encoder layers, accumulating a holistic, context-aware representation of the entire image.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 24,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "Cross-Attention Mechanism",
+    "question": "Explain the cross-attention mechanism used in the expert models to fuse features from multiple backbone branches. How does GWOUnifiedCrossAttention extend this in Architecture 2?",
+    "answer": "Cross-attention allows each backbone branch to selectively incorporate relevant features from the other branches. The standard cross-attention formula is: CrossAttn(Q, K, V) = softmax(QK^T / √d_k) · V, where Q is the query (from one branch), K and V are the key and value (from another branch), and d_k=96 per head. In Architecture 1 AMD expert, MultiWayCrossAttention computes single-head cross-attention across all six pairwise directions of three branches (CNN, ViT, Lesion) with fixed equal weights (1/3 each): f_fused = Linear(Concat(Σ_{j≠i} (1/3)·CrossAttn(f_i, f_j, f_j))). GWOUnifiedCrossAttention in Architecture 2 extends this with 8-head multi-head attention across all 6 pairwise directions. The 768-dimensional feature vectors are projected into 8 subspaces of 96 dimensions each with separate W_Q, W_K, W_V matrices per head: MultiHead(Q,K,V) = Concat(head_1,...,head_8)·W_O. Critically, the blend weights [w_self, w_A←G, w_A←D] for each expert's attended representation are no longer fixed at 1/3 but are optimized by the Grey Wolf Optimizer each validation epoch: f_A^* = w_self^A·f_A + w_{A←G}^A·Attn_{A←G} + w_{A←D}^A·Attn_{A←D}. This allows the system to adaptively weight cross-disease feature contributions based on fitness.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 25,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "Dual Classification Heads",
+    "question": "What are the two parallel classification heads in the expert models, how do they differ architecturally, and what is the purpose of the PenalisedAgreementLoss between them?",
+    "answer": "Both expert models employ two parallel classification heads trained simultaneously on the same 768-dimensional fused feature vector: (1) Head 1 (ViT-style) — applies layer normalization then two linear layers with GELU activation and dropout: LN(f) → Linear(768→512) → GELU → Dropout(p=0.3) → Linear(512→N). (2) Head 2 (CBAM-style) — applies Convolutional Block Attention Module then two linear layers with ReLU: CBAM(f) → LN → Linear(768→512) → ReLU → Dropout(p=0.3) → Linear(512→N). CBAM applies a channel-wise squeeze-and-excitation gate: CBAM(f) = f · σ(W_2·ReLU(W_1·AvgPool(f))) with reduction ratio r=8. The purpose of two heads: to exploit complementary discriminative mechanisms — Head 1 uses pure linear classification on ViT-style normalized features; Head 2 uses spatial-channel attention recalibration before classification. The PenalisedAgreementLoss (L_agree = MSE(p^(1), p^(2)) + λ_pen·|max(p^(1))−max(p^(2))|) encourages head diversity by penalizing when both heads produce identical probability distributions, forcing them to specialize. In Architecture 2, SOL3 replaces this with a RecallAwareDiversityLoss that asymmetrically encourages divergence specifically on hard minority classes.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 26,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "Loss Functions",
+    "question": "Write out the complete combined training loss function for the expert models in Architecture 1 and explain each component's role.",
+    "answer": "The combined Architecture 1 expert training loss is: L_expert = L_CE^(1) + L_CE^(2) + λ_agree·L_agree + λ_cal·(L_ECE^(1) + L_ECE^(2)), where: (1) L_CE^(k) = −Σ_c w_c·y_c·log(p_c^k) is the class-weighted cross-entropy for head k. Manual class weights compensate for imbalance: AMD weights={1.0, 1.5, 1.2, 2.0} for the four classes; DR weights={1.0, 2.0, 1.5, 3.0, 3.5} for the five severity grades. Higher weights for rare/hard classes increase their gradient contribution. (2) L_agree = MSE(p^(1), p^(2)) + λ_pen·|max(p^(1))−max(p^(2))| is the PenalisedAgreementLoss encouraging head diversity — if both heads produce identical predictions, classification is relying on a single perspective, wasting the dual-head architecture. (3) L_ECE = Σ_{m=1}^{M} (|B_m|/n)·|acc(B_m)−conf(B_m)| is the differentiable Expected Calibration Error loss, binning predictions into M=10 confidence intervals and penalizing the gap between confidence and empirical accuracy per bin. This ensures predicted probabilities are statistically reliable, not overconfident. Parameters: λ_agree=0.3, λ_cal=0.1.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 27,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "HG-MEF Fusion Network",
+    "question": "How does the DiseaseSpecificGatingNetwork compute expert routing weights, and what is the GateDiversityLoss designed to prevent?",
+    "answer": "The DiseaseSpecificGatingNetwork processes the input image through a ResNet-50 backbone to produce a 512-dimensional gate embedding g. Three disease-specific attention scalars a_d ∈ [0,1] are computed via independent MLPs followed by sigmoid activations. The gate routing weights are computed as: gate_logits = GateProjection(g) ∈ ℝ^3 → gate_weights = softmax((gate_logits · diag(a_AMD, a_GLC, a_DR)) / τ_gate), where τ_gate is a learnable gate temperature initialized at 2.0. The gate weights thus combine global image content (gate_logits from ResNet-50) with disease-specific attention scalars, creating a content-aware routing that can emphasize the appropriate expert for each input image. The GateDiversityLoss is designed to prevent routing collapse — a failure mode where the gating network converges to always routing every image to a single expert (producing low entropy distributions). It is defined as: L_GateDiversity = −H(E_batch[gate_weights]) = Σ_d ē_d·log(ē_d), where ē_d is the mean gate weight for expert d across the batch. By maximizing entropy of the mean gate distribution (minimizing L_GateDiversity), the loss prevents any single expert from monopolizing all inputs, preserving the benefit of three specialized experts.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 28,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "SOL1 – PSO in-training",
+    "question": "Explain the SOL1 mechanism mathematically: how does PSO-optimized thresholds integrate into the training loss, and why is this superior to post-training thresholding alone?",
+    "answer": "SOL1 (PSO in-training threshold penalization) is the first of three DR-specific solutions. Standard PSO is used post-training for threshold calibration. SOL1 extends this by incorporating PSO-optimized thresholds directly into the training loop: Every 10 training epochs, a PSO run is executed on a validation subset to find current best per-class decision thresholds θ_PSO ∈ ℝ^5 for the five DR classes. The PSO fitness function is FN-aware: Fitness(θ) = mean_F1(θ) + 3.0·mean_recall(θ), strongly prioritizing recall. These thresholds then define an additional training loss: L_SOL1 = λ_SOL1 · mean_i(ReLU(θ_PSO[y_i] − p_{y_i})), where p_{y_i} is the predicted probability for the correct class y_i and λ_SOL1=0.2. The ReLU operator means this loss only fires when the model is under-confident about a correct prediction (below PSO threshold); no penalty for correct over-confidence. This creates a co-evolutionary feedback loop: PSO identifies the current threshold weaknesses → these thresholds penalize low-confidence correct predictions → the model learns to be more confident on minority classes → the next PSO run finds updated thresholds reflecting this improvement. This is superior to post-training thresholding because it directly modifies the learned feature representations during training, not just the decision boundary afterward.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 29,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "SOL2 – GA Recall Floor",
+    "question": "How does SOL2 modify the Genetic Algorithm fitness function to enforce minimum recall floors, and what clinical reasoning justifies the specific penalty structure?",
+    "answer": "SOL2 modifies the GA fitness function used for class weight evolution. Architecture 1 used fixed class weights [1.0, 2.0, 1.5, 3.0, 3.5] for five DR classes, which proved insufficient against the 10:1 imbalance. SOL2 replaces standard macro-F1 fitness with a clinically informed composite: Fitness(ω) = MacroF1(ω) − 2.0·Σ_k max(0, 0.55−recall_k(ω)) + 0.1·Σ_{j∈H} recall_j(ω), where ω is the class weight vector, H={Mild, Proliferative, Severe} is the set of hard minority classes, and 0.55 is the minimum acceptable recall threshold. The three terms serve distinct clinical purposes: (1) MacroF1(ω) — primary objective, ensuring good overall performance. (2) −2.0·Σ_k max(0, 0.55−recall_k(ω)) — a hard recall floor penalty; any class with recall below 55% loses 2 fitness points per percentage point, dominating the fitness function and forcing the GA to prioritize bringing all classes above the floor. The penalty weight (2.0 >> 0.1) ensures this constraint is never violated. (3) +0.1·Σ_{j∈H} recall_j(ω) — a reward bonus for further improving recall on the three hardest classes beyond the floor. Additionally, No_DR weight is clamped to [0.5, 1.5] to prevent GA from collapsing the dominant class weight to zero (a degenerate solution that would classify everything as a minority class). GA class weights evolved by SOL2 reached up to 4.9 for the Severe class, versus the fixed 3.5 in Architecture 1.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 30,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "SOL3 – RecallAwareDiversityLoss",
+    "question": "How does SOL3's RecallAwareDiversityLoss differ from the symmetric PenalisedAgreementLoss in Architecture 1, and why is asymmetric treatment of hard vs. easy classes clinically important?",
+    "answer": "Architecture 1 uses a symmetric PenalisedAgreementLoss that uniformly encourages the two classification heads to disagree. SOL3 replaces this with an asymmetric, class-aware diversity loss: L_SOL3 = −0.2·Σ_{c∈H} KL(p_c^(1) || p_c^(2)) + 0.1·Σ_{c∈E} KL(p_c^(1) || p_c^(2)), where H={Mild, Proliferative, Severe} (hard classes) and E={No_DR, Moderate} (easy classes). The negative sign on the H term means the loss actively encourages divergence between Head 1 and Head 2 on hard minority classes (maximizing KL divergence). The positive sign on the E term penalizes divergence on easy majority classes (enforcing consistency). The clinical rationale is: for hard minority classes where both heads tend to misclassify with high confidence, encouraging them to disagree means at least one head is likely to capture the correct signal for each sample, even if the other is wrong. A final prediction aggregating two diverse heads is more likely to be correct than two correlated heads both making the same mistake. For easy majority classes, both heads should agree consistently, so divergence there indicates noise and is penalized.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 31,
+    "chapter": "Chapter 3 – Methodology",
+    "topic": "HG-MEF-Bio Fusion",
+    "question": "Explain the three-stream fusion architecture in HG-MEF-Bio: what are the three streams, how are their logits combined, and what is the DEFeatureMixer's role?",
+    "answer": "The HG-MEF-Bio fusion network combines three complementary information streams to produce the final 11-class prediction: (1) Attention stream (l_attn) — produced by GWOUnifiedCrossAttention, which computes 8-head multi-head attention across all 6 pairwise expert directions, then maps through 2-layer MLP mappers to 11-class logits. Captures cross-disease feature interactions optimized by GWO. (2) Feature stream (l_feat) — produced by DEFeatureMixer. DE-optimized weight vector w_DE=softmax([w_A, w_G, w_D]) scales expert features before concatenation: f_joint = Concat(w_A·f_A, w_G·f_G, w_D·f_D) ∈ ℝ^2304, then projected to 11 classes through two-layer MLP with layer normalization. The DEFeatureMixer allows differential evolution to discover which expert's features contribute most to the final classification, adapting feature contributions based on fitness rather than fixing them equally. (3) Gate/decision stream (l_gate) — ABC-weighted expert probability vectors mapped to 11 classes using the ABCGatedRoutingNetwork bias-corrected gate weights. The three streams are combined via learnable log-space weights: α=exp(log_α), β=exp(log_β), γ=exp(log_γ) → l_final = (α·l_attn + β·l_feat + γ·l_gate)/(α+β+γ+ε). Initialized α=0.40, β=0.35, γ=0.25. Log-space parameterization ensures all weights remain positive throughout training.",
+    "source_chapters": ["Chapter 3"]
+  },
+  {
+    "id": 32,
+    "chapter": "Chapter 4 – Results",
+    "topic": "Phase-I Results",
+    "question": "Summarize the Phase-I results for CNN baselines and the Vision Transformer, and identify the three structural weaknesses of the best Phase-I model that motivated Phase-II.",
+    "answer": "Phase-I evaluated five CNN architectures and a ViT-B/16 on the unified 4-class (AMD, DR, Glaucoma, Healthy) dataset. CNN results: MobileNetV2 performed worst (71% accuracy, macro-F1=0.50) due to over-predicting Healthy. VGG16 achieved 81% accuracy (0.82/0.83 macro/weighted F1) with good DR and Healthy performance but weak Glaucoma precision. ResNet-50, DenseNet-121, and InceptionV3 ranged from 83–88% accuracy; DenseNet-121 was the best CNN (~87%, dense skip connections aiding feature reuse). All CNNs scored >90% on Healthy but 75–88% on DR; lower scores on Glaucoma and AMD. ViT-B/16 (best Phase-I model): trained for 120 epochs with cosine decay and swarm-inspired attention sparsification; achieved ~90–91% overall accuracy, macro/weighted F1 ~0.90. Per-class: Healthy 96%, AMD 84%, Mild DR 82%, Glaucoma 78%. Three structural weaknesses motivating Phase-II: (1) Inter-class feature interference between AMD and Proliferative DR due to partially overlapping visual characteristics; (2) No coherent strategy for addressing DR severity grade minority classes; (3) Operated on a simplified 4-class taxonomy rather than the detailed multi-grade clinical classification needed in practice.",
+    "source_chapters": ["Chapter 4"]
+  },
+  {
+    "id": 33,
+    "chapter": "Chapter 4 – Results",
+    "topic": "Architecture 1 AMD Expert",
+    "question": "What validation accuracy did the Architecture 1 AMD Expert achieve, what were the per-class results, and what did the calibration analysis reveal?",
+    "answer": "The AMD Expert (EnhancedAMDModel) achieved 97.75% overall validation accuracy (391/400 correct). Per-class breakdown: Cataract 100% (100/100, zero misclassifications — perfect), Normal 99% (99/100, 1 misclassified as Cataract), AMD 98% (98/100, 1 as Cataract and 1 as Diabetes), Diabetes 94% (94/100, 5 as Normal and 1 as AMD). Training converged rapidly to 99.8% training accuracy by epoch 10, with early stopping at epoch 17. ReduceLROnPlateau was triggered twice: LR reduced from 1e-4 to 5e-5 at epoch 5 and to 3e-5 at epoch 14. Validation accuracy showed notable fluctuation due to small validation set size (100 samples/class — a single image's correct/incorrect classification causes a 1 percentage point swing). Calibration analysis: 97% of all samples had predictions with confidence above 0.9, and the calibration curve was very close to the ideal 1:1 diagonal line, indicating well-calibrated probability estimates. This was the cleanest result among the three expert models.",
+    "source_chapters": ["Chapter 4"]
+  },
+  {
+    "id": 34,
+    "chapter": "Chapter 4 – Results",
+    "topic": "Architecture 1 Glaucoma Expert",
+    "question": "What were the clinical implications of the Architecture 1 Glaucoma Expert's false negative rate for Referable Glaucoma, and how did this motivate Architecture 2 design choices?",
+    "answer": "The Glaucoma Expert (HybridGlaucomaModel) achieved 94.4% overall validation accuracy (727/770). NRG accuracy: 93.0% (358/385) — 27 NRG samples misclassified as RG (false positive referrals, less clinically dangerous). RG accuracy: 95.8% (369/385) — 16 RG samples misclassified as NRG (false negatives, clinically critical missed glaucoma cases). The 4.2% false negative rate for RG represents a significant patient safety concern: patients with Referable Glaucoma who are missed at screening will not receive appropriate specialist care, potentially suffering irreversible peripheral vision loss that progresses undetected until severe disability occurs. Training continued for 27 epochs with validation accuracy stabilizing at 0.93–0.94 from epoch 10 onwards; mild overfitting was observed (training loss → ~0, validation loss rising from 0.47 to 1.3 after 27 epochs). This false negative analysis directly motivated Architecture 2 design: (1) PSO-based asymmetric threshold optimization with NRG threshold=0.101 (very low — maximizes sensitivity for RG detection) and RG threshold=0.854 (very high — requires strong confidence before non-referral). (2) GA class weights emphasizing RG: evolved to RG=3.7, NRG=1.9, confirming that missing glaucoma is the worst error.",
+    "source_chapters": ["Chapter 4"]
+  },
+  {
+    "id": 35,
+    "chapter": "Chapter 4 – Results",
+    "topic": "Architecture 1 DR Expert",
+    "question": "Describe the Architecture 1 DR Expert's per-class performance, identify the AUC-ROC vs accuracy disparity for Severe DR, and explain what this disparity reveals about the model.",
+    "answer": "The DR Expert (HybridDRModel) showed 86.8% overall accuracy with highly variable per-class performance: No_DR: 98.1% (265/270) — excellent, 4 misclassified as Mild; Moderate DR: 89.3% (133/149) — acceptable, 8 misclassified as Severe, 3 as Mild; Mild DR: 63.6% (35/55) — weak, 18 of 20 errors classified as Moderate (Mild-Moderate boundary confusion); Proliferative DR: 68.2% (30/44) — weak, 10 misclassified as Moderate; Severe DR: 39.3% (11/28) — CRITICAL FAILURE, 9 classified as Moderate and 8 as Proliferative. In the unified HG-MEF model, Severe DR achieved AUC-ROC of 0.980 but only 37% argmax accuracy. The AUC-accuracy disparity is diagnostically significant: high AUC means the model correctly identifies the ordinal ordering of severity (it can rank images from least to most severe) and has learned the relevant features in its deep layers. The low argmax accuracy means it cannot correctly set the decision boundaries between adjacent severity grades — the learned probability estimates are miscalibrated between Moderate/Severe/Proliferative. This is fundamentally a calibration and threshold problem, not a feature learning problem — validating PSO-based per-class threshold optimization as the correct architectural response in Architecture 2.",
+    "source_chapters": ["Chapter 4"]
+  },
+  {
+    "id": 36,
+    "chapter": "Chapter 4 – Results",
+    "topic": "Architecture 1 HG-MEF Fusion",
+    "question": "What gating anomaly was observed in the Architecture 1 HG-MEF fusion model for AMD and Cataract inputs, and what does this reveal about the DiseaseSpecificGatingNetwork's failure mode?",
+    "answer": "Expert gate weight analysis revealed a striking misrouting behavior: AMD and Cataract inputs received minimal weights for the AMD Expert (0.05–0.06) and were instead almost entirely routed to the Glaucoma Expert (gate weight 0.94–0.95). DR inputs correctly received ~0.99 weight for the DR Expert. This means that even though the AMD Expert was correctly classifying AMD and Cataract images (97% and 100% accuracy), the gate network was essentially ignoring it and obtaining correct answers through the Glaucoma Expert — an incorrect and unreliable routing arrangement. This represents a local optimum failure: the DiseaseSpecificGatingNetwork found a routing configuration where overall loss was minimized (by accidentally using the Glaucoma Expert, which happened to have sufficient general retinal features for AMD/Cataract) without learning semantically correct routing. This failure mode is the classic 'routing collapse' problem, but in a non-entropy-collapsed form — instead of routing everything to one expert, it routes the wrong diseases to an expert. Architecture 2 addresses this through the ABCGatedRoutingNetwork with ABC-optimized routing bias b added to gate logits, which by epoch 8 of HG-MEF-Bio training had corrected proper disease-specific routing for AMD and Cataract.",
+    "source_chapters": ["Chapter 4"]
+  },
+  {
+    "id": 37,
+    "chapter": "Chapter 4 – Results",
+    "topic": "Architecture 2 DR Bio Expert",
+    "question": "What were the per-class accuracy improvements in the DR Bio Expert (Architecture 2) compared to Architecture 1, and what combination of factors produced the 53.5 percentage point gain for Severe DR?",
+    "answer": "The DR Bio Expert (EnhancedDRModelBio) achieved overall test accuracy of 93.6% — 6.8 percentage points higher than Architecture 1's 86.8%. Per-class improvements: Severe DR: 39.3% → 92.8% (+53.5 pp, PSO threshold=0.097 — very aggressive); Mild DR: 63.6% → 91.7% (+28.1 pp, PSO threshold=0.553); Proliferative DR: 68.2% → 92.5% (+24.3 pp, PSO threshold=0.950 — very conservative); No_DR: 98.1% → 99.4% (+1.3 pp); Moderate DR: 89.3% → 89.7% (+0.4 pp). The 53.5 pp gain in Severe DR resulted from the combined action of five elements: (1) SOL1 — PSO in-training threshold penalty co-evolving model confidence on Severe class; (2) SOL2 — GA recall-floor constraint forcing Severe class weight to evolve up to 4.9 (vs fixed 3.5 in Arch 1), ensuring Severe recall never drops below 55%; (3) SOL3 — RecallAwareDiversityLoss encouraging Head 1 and Head 2 to diverge on Severe predictions, increasing the chance one head captures the correct classification; (4) Backbone freezing for the first 5 epochs allowing classification heads to stabilize before full fine-tuning; (5) 50 training epochs (vs 17 in Architecture 1) with deeper 3-layer dropout-regularized classification heads. Validation loss steadily decreased from 2.4 to 1.4 over 50 epochs — a revolutionary contrast to Architecture 1 where loss plateaued between 2.5 and 4.5.",
+    "source_chapters": ["Chapter 4"]
+  },
+  {
+    "id": 38,
+    "chapter": "Chapter 4 – Results",
+    "topic": "Architecture 2 AMD Bio Expert",
+    "question": "Why did the AMD Bio Expert show a slight overall accuracy regression (-0.5pp) from Architecture 1 despite improving the AMD class itself, and what does the PSO threshold analysis reveal?",
+    "answer": "The AMD Bio Expert achieved 97.25% accuracy vs. 97.75% in Architecture 1 — a slight -0.5pp overall regression. Breaking down: AMD class improved from 98% to 100% (both Architecture 1 errors eliminated via FA+GradCAM guiding EfficientNet-B4 to better drusen/pigment features); Cataract remained at 100%; Diabetes degraded slightly from 94% to 93%; Normal degraded from 99% to 96%. The regression in Normal (−3pp) and Diabetes (−1pp) is attributable to CosineAnnealingWarmRestarts LR schedule causing minor boundary disturbances around the already highly saturated classification problem — a trade-off accepted because major gains were being pursued in the harder DR domain. The PSO convergence and threshold analysis is revealing: PSO converged immediately at fitness ~3.9, providing thresholds: AMD=0.363, Cataract=0.326, Diabetes=0.136, Normal=0.413. The extremely low Diabetes threshold of 0.136 sounds aggressive, but in practice PSO produces identical confusion matrix results as argmax — indicating the classifier is bimodally confident (predictions near 0 or 1 with few mid-confidence values). This bimodal confidence distribution is a sign of overconfidence that the ECE calibration loss is designed to address, but the PSO cannot fix it since there are no mid-range probabilities to threshold differently.",
+    "source_chapters": ["Chapter 4"]
+  },
+  {
+    "id": 39,
+    "chapter": "Chapter 4 – Results",
+    "topic": "HG-MEF-Bio Fusion Interim Results",
+    "question": "What was the interim HG-MEF-Bio performance at Epoch 10 of 50, what early evidence suggested the bio-inspired fusion components were working, and what final performance is expected?",
+    "answer": "At Epoch 10 of 50 (interim checkpoint), HG-MEF-Bio achieved: validation accuracy 95.14% (vs Architecture 1's final 90.63% — already +4.51pp better after only 10 of 50 epochs), validation Macro-F1 0.9278 (vs 0.9057 in Architecture 1, +0.0221). All three best checkpoints (best-by-accuracy, best-by-F1, best_combined) yielded identical 2,249.8MB checkpoint files for Epoch 10, indicating stable, coherent progress with accuracy and F1 optimizing in the same direction (no convergence conflict). Two specific pieces of early evidence for bio-inspired effectiveness: (1) DEFeatureMixer update at Epoch 6 was immediately followed by a +1.2pp spike in validation accuracy from Epoch 6 to Epoch 10, suggesting DE's expert feature weight recalibration provides immediate fusion quality benefit. (2) By Epoch 8, the ABC routing bias had corrected the AMD-to-Glaucoma Expert misrouting failure seen in Architecture 1, restoring proper disease-specific routing for AMD and Cataract inputs. Final performance after 50 epochs + PSO post-training threshold optimization is expected to substantially exceed the Epoch 10 interim values, particularly for the DR minority classes.",
+    "source_chapters": ["Chapter 4"]
+  },
+  {
+    "id": 40,
+    "chapter": "Chapter 4 – Results",
+    "topic": "Bio-Algorithm Convergence",
+    "question": "Describe the convergence behavior of GWO across the three expert models and what this reveals about the relationship between GWO benefit and base model quality.",
+    "answer": "GWO convergence profiles across the three Bio Expert models demonstrate a clear pattern: GWO benefit scales with how challenging the underlying classification task is. AMD Bio Expert: GWO reached top fitness of 1.0000 at iteration 3 for all epoch-level updates (ceiling effect) — the AMD classification task is already so well solved by the expert that any random cross-attention blend weights produce perfect validation mini-batch accuracy. No meaningful optimization needed. Glaucoma Bio Expert: GWO stabilized at fitness 0.9375 after epoch 2, achieved from iteration 0 in each update run — indicating stable, near-optimal cross-attention blending for the binary classification task. DR Bio Expert: GWO showed progressive improvement throughout training — Epochs 1–5: fitness 0.60–0.72; mid-training: 0.72–0.84; late-training (Epochs 24–50): 0.875–0.9375. This gradual improvement reveals that GWO's optimization advantage increases as the quality of the underlying expert model increases (better features → more meaningful attention combinations to optimize). GWO appears most valuable at intermediate model quality — providing the largest absolute gains for the most challenging task (DR) as it progresses through training, reaching values comparable to Glaucoma by late epochs.",
+    "source_chapters": ["Chapter 4"]
+  },
+  {
+    "id": 41,
+    "chapter": "Chapter 4 – Results",
+    "topic": "Cross-Architecture Comparison",
+    "question": "Summarize the comprehensive cross-phase and cross-architecture performance comparison table, highlighting the most clinically significant improvements.",
+    "answer": "The comprehensive comparison across Phase-I ViT → Architecture 1 HG-MEF → Architecture 2 HG-MEF-Bio (interim): AMD Classification: ~84% (Phase-I, 4-class) → 97.75% (Arch 1) → 97.25% (Arch 2); maximum gain +13.75pp. Glaucoma Classification: ~78% (Phase-I) → 94.4% (Arch 1) → 95.45% (Arch 2); maximum gain +17.45pp. DR Classification (overall): ~82% (Phase-I) → 86.8% (Arch 1) → 93.6% (Arch 2); maximum gain +11.6pp. Severe DR (critical minority): not reported (Phase-I) → 39.3% CRITICAL FAILURE (Arch 1) → 92.8% (Arch 2); gain +53.5pp — the most clinically significant result. Missed Glaucoma cases: not isolated (Phase-I) → 16 cases (Arch 1) → 12 cases (Arch 2); −25% reduction. Unified Multi-Disease Accuracy: ~90–91% 4-class (Phase-I) → 90.63% 12-class (Arch 1) → 95.14%* 11-class (Arch 2); gain +4.51pp* — notable that this improvement occurred on a simultaneously more challenging classification scope (11 vs 4 classes). Unified Macro-F1: ~0.90 → 0.9057 → 0.9278*; gain +0.022*. The 53.5pp improvement in Severe DR represents the single most clinically impactful result, directly translating to a reduction in missed referrals for patients requiring immediate laser/anti-VEGF treatment.",
+    "source_chapters": ["Chapter 4"]
+  },
+  {
+    "id": 42,
+    "chapter": "Chapter 5 – Discussion",
+    "topic": "Interpretation of Results",
+    "question": "Why was the high overall accuracy of Phase-I models a misleading performance metric for a clinical screening tool, and what does this imply about evaluation methodology for medical AI?",
+    "answer": "The Phase-I ViT achieved ~90–91% overall accuracy on the 4-class unified problem — an impressive headline figure. However, this number was misleading because: (1) The model achieved 96% accuracy on the Healthy class, which constitutes a large portion of any population-level screening cohort. High accuracy on the majority (Healthy) class inflates the overall metric while masking failures on clinically important minority classes. (2) Glaucoma precision was only 78% and Mild DR only 82% — both representing clinically significant failure rates that would result in many missed referrals in practice. (3) The 4-class taxonomy (AMD, DR, Glaucoma, Healthy) does not reflect the clinical reality of multi-grade severity classification — it cannot distinguish between Mild and Severe DR, which are entirely different clinical urgencies. For medical AI, this implies that overall accuracy is an insufficient evaluation metric when class imbalance exists. The thesis uses per-class accuracy, macro-F1 (equal weight to all classes), AUC-ROC per class, and specifically tracks minority class performance as primary metrics. The 39.3% Severe DR accuracy in Architecture 1 would be completely hidden by an 86.8% overall accuracy headline — yet missing 60.7% of patients needing immediate treatment is a catastrophic clinical failure.",
+    "source_chapters": ["Chapter 5"]
+  },
+  {
+    "id": 43,
+    "chapter": "Chapter 5 – Discussion",
+    "topic": "AUC vs Accuracy Disparity",
+    "question": "What is the clinical and technical interpretation of Severe DR having AUC-ROC=0.980 but only 37% argmax accuracy in Architecture 1, and what is the correct architectural response?",
+    "answer": "The AUC-ROC of 0.980 for Severe DR means the model can correctly rank images by severity order in 98% of cases — it has learned discriminative features for Severe DR and understands that Severe DR is more severe than Moderate. However, argmax accuracy of only 37% means that when forced to commit to a single class label (argmax), the model very frequently chooses Moderate or Proliferative instead of Severe. This apparent contradiction is explained by miscalibrated decision boundaries: the model's Severe DR probability estimates are systematically suppressed (pulled toward Moderate or Proliferative) due to the extreme class imbalance during training. The learned probability distributions are correctly ordered ordinally but incorrectly calibrated in absolute scale — the Severe class never generates probability estimates high enough to win the argmax competition against Moderate. This is confirmed by the PSO-discovered very aggressive threshold of 0.097 for Severe DR: even if the model produces a probability of only ~10% for Severe, that can be the correct classification. The correct architectural response is NOT to improve feature learning (already good, as evidenced by high AUC) but rather to (1) co-evolve decision thresholds during training (SOL1), (2) force the model to develop higher confidence on Severe through GA recall-floor constraints (SOL2), and (3) apply PSO-based post-training threshold recalibration.",
+    "source_chapters": ["Chapter 5"]
+  },
+  {
+    "id": 44,
+    "chapter": "Chapter 5 – Discussion",
+    "topic": "Bio-Inspired as Complements",
+    "question": "What does the pattern of bio-inspired improvements across DR severity grades reveal about the appropriate role of bio-inspired algorithms as complements to gradient descent?",
+    "answer": "The pattern of improvements across DR severity grades is illuminating: the three minority classes with worst Architecture 1 performance gained the largest improvements — Severe DR +53.5pp, Mild DR +28.1pp, Proliferative DR +24.3pp — while the already well-performing classes showed minimal change: No_DR +1.3pp, Moderate DR +0.4pp. This strongly suggests bio-inspired algorithms function as targeted corrective mechanisms for exactly where gradient descent fails, not as universal performance amplifiers. Gradient descent with class-weighted cross-entropy is highly effective for majority classes (where gradients are abundant and loss surfaces are smooth) but systematically fails for minority classes (where gradients are dominated by majority contributions and decision boundaries are miscalibrated). Bio-inspired algorithms, being population-based metaheuristics that directly optimize non-differentiable objectives (recall, per-class decision thresholds, class weight distributions), can navigate these failure modes. The SOL1 co-evolutionary loop, SOL2 recall-floor constraint, and SOL3 asymmetric diversity loss together operate on aspects of the problem that gradient descent cannot address through its local, differentiable optimization. The implication is that bio-inspired algorithms should be deployed strategically at identified failure points, not uniformly across all layers.",
+    "source_chapters": ["Chapter 5"]
+  },
+  {
+    "id": 45,
+    "chapter": "Chapter 5 – Discussion",
+    "topic": "PSO Clinical Triage",
+    "question": "How do the PSO-optimized thresholds for Glaucoma and DR concretely implement clinical triage priorities, and why is this clinically more appropriate than standard argmax decoding?",
+    "answer": "PSO optimizes thresholds using a fitness function that strongly prioritizes recall: Fitness(θ) = mean_F1(θ) + 3.0·mean_recall(θ). This FN-aware fitness causes PSO to discover thresholds that match the clinical triage principle: false negatives (missing disease) are more dangerous than false positives (unnecessary referral). For Glaucoma: NRG threshold=0.101 (very low — only 10.1% confidence in Non-Referable is needed to assign NRG), RG threshold=0.854 (very high — needs 85.4% confidence to assign non-referral). Practically: almost any hint of glaucomatous features triggers a Referable classification, minimizing missed glaucoma at the cost of some false positive referrals (acceptable clinically). For DR: Severe threshold=0.097 (extremely aggressive — catches nearly all Severe cases even at low model confidence), Proliferative threshold=0.950 (very conservative — requires extremely high confidence before assigning PDR, accepting some Severe → Moderate misclassifications but ensuring true PDR is caught). Standard argmax decoding assumes a symmetric 50% threshold for all classes — clinically inappropriate because missing a Severe DR case and classifying a Normal fundus as Mild DR have completely different consequences. PSO thresholds asymmetrically calibrate decision boundaries to match the asymmetric clinical costs of different types of errors.",
+    "source_chapters": ["Chapter 5"]
+  },
+  {
+    "id": 46,
+    "chapter": "Chapter 5 – Discussion",
+    "topic": "Strengths and Limitations",
+    "question": "What are the main strengths of the HG-MEF-Bio system as identified in the discussion, and what are the primary limitations that define the scope of future work?",
+    "answer": "Strengths: (1) Joint multi-disease classification of AMD (4 classes), Glaucoma (2 classes), and DR (5 classes) in a single inference pass — clinically comprehensive from one fundus image; (2) Specialist-level accuracy via expert-then-fuse paradigm without compromising multi-disease breadth; (3) Specific algorithmic addressing of minority class failure with bio-inspired solutions achieving clinically safe performance (92.8% Severe DR); (4) Clinically interpretable outputs via gate weights, PSO decision thresholds, and Grad-CAM attention maps; (5) Scalable and modular architecture — additional expert models can be integrated; (6) Production-quality training with atomic checkpoints, AMP mixed-precision, and gradient checkpointing. Limitations: (1) Three-stage sequential training is complex and time-consuming; (2) Six concurrent bio-inspired algorithms add significant computational overhead; (3) Slight AMD accuracy regression from CosineAnnealingWarmRestarts; (4) HG-MEF-Bio fusion not fully trained at submission (10/50 epochs); (5) Only evaluated on benchmark datasets without prospective clinical validation; (6) Single-label output only — does not handle multi-label comorbidity (e.g., a patient with both Glaucoma and DR); (7) PSO post-training threshold tuning on validation set risks overfitting to that specific split; (8) GA fitness inadequately predictive for binary classification on small datasets.",
+    "source_chapters": ["Chapter 5"]
+  },
+  {
+    "id": 47,
+    "chapter": "Chapter 6 – Conclusion",
+    "topic": "Main Contributions",
+    "question": "What are the primary contributions of this thesis to the fields of retinal disease classification, bio-inspired optimization, and clinical AI?",
+    "answer": "The thesis makes the following primary contributions: (1) Architectural: The expert-then-fuse HG-MEF paradigm — first system to combine disease-specific expert specialization with learned hierarchical gating for simultaneous three-disease retinal classification, demonstrating specialist-level accuracy (AMD 97.75%, Glaucoma 94.4%, DR 86.8% in Arch 1; 97.25%, 95.45%, 93.6% in Arch 2) on a challenging 11-class taxonomy. (2) Bio-inspired integration: First publication to simultaneously integrate six distinct bio-inspired algorithms (FA, GWO, GA, PSO, ABC, DE) as active training-loop participants across all architectural levels of a deep learning system for retinal classification — not as peripheral post-hoc optimizers. (3) Clinical outcome: 53.5 percentage point improvement in Severe DR classification (39.3% → 92.8%) through the SOL1+SOL2+SOL3 combination — translating directly to reduced missed referrals for patients requiring immediate laser/anti-VEGF treatment. (4) Calibration: First application of a differentiable ECE calibration loss at the fusion layer in multi-disease retinal classification training, ensuring statistically reliable confidence estimates for clinical decision support. (5) Fusion: ABC-corrected routing network resolving expert routing collapse; GateDiversityLoss entropy regularization preventing routing collapse; DEFeatureMixer for adaptive expert feature scaling.",
+    "source_chapters": ["Chapter 6"]
+  },
+  {
+    "id": 48,
+    "chapter": "Chapter 6 – Conclusion",
+    "topic": "Future Work",
+    "question": "What are the three primary directions for future work identified in the conclusion, and what specific methods or approaches does the thesis suggest for each?",
+    "answer": "Three primary future directions: (1) Prospective Clinical Validation and Cross-Device Generalization — All results were obtained on benchmark datasets from controlled splits. Future work requires prospective validation on live clinical fundus images acquired across different imaging devices (Zeiss Visucam, Topcon TRC, Remidio non-mydriatic cameras), different patient cohorts, and different clinical sites (particularly LMICs with highest DR/Glaucoma burden). Cross-modality generalization with adversarial feature alignment or test-time augmentation is also recommended. (2) Multimodal Imaging Integration — The current system uses only 2D color fundus photography. Supplementing with Optical Coherence Tomography (OCT), which provides cross-sectional thickness measurements for individual retinal layers, would substantially improve feature availability for early-stage AMD (direct visualization of RPE, drusen, CNV in 3D) and Glaucoma (RNFL thickness mapping). A suggested architecture: dual-stream expert system accepting both fundus and OCT images per disease domain, fused via the existing cross-attention module. (3) Lightweight Deployment and Real-Time Edge Inference — The 3-backbone expert architecture requires ~16GB VRAM for training. Future work should develop knowledge distillation from the full HG-MEF-Bio teacher to a compact student model using logit and attention map mimicking. Quantization-aware training and Neural Architecture Search (NAS) with bio-inspired algorithms are proposed for resource-constrained tele-ophthalmology deployment.",
+    "source_chapters": ["Chapter 6"]
+  },
+  {
+    "id": 49,
+    "chapter": "Chapters 3 & 4",
+    "topic": "Firefly Algorithm Integration",
+    "question": "Explain the Firefly Algorithm's integration with GradCAM in Architecture 2: what does each firefly represent, what is the brightness/fitness function, and how does the update rule modify EfficientNet-B4's feature channels?",
+    "answer": "In Architecture 2, the Firefly Algorithm (FA) is integrated with GradCAM to optimize EfficientNet-B4 channel attention weights. Each firefly i represents a candidate 64-dimensional channel-attention vector v_i ∈ ℝ^64, a compressed representation of which of EfficientNet-B4's 1792 feature channels should be amplified. Population: n=10 fireflies. Brightness (fitness): b_i = ||AvgPool(ExpandedFeatures_i)|| · mean(L^c_GradCAM), where L^c_GradCAM = ReLU(Σ_k α_k^c · A^k) is the GradCAM saliency map and α_k^c = (1/Z)Σ_{i,j} ∂y^c/∂A^k_{ij} is the gradient-weighted importance of channel k for class c. Fireflies with channel weights that activate diagnostically relevant regions (as measured by GradCAM saliency) are brighter and attract others. Update rule: v_i^(t+1) = v_i^(t) + β(v_j^(t) − v_i^(t)) + α·ε_i, where attractiveness β = β_0·exp(−γ·||v_j − v_i||²) with β_0=1.0, γ=0.5 (decreasing with distance), α=0.2 (random step), ε_i ~ U(−0.5, 0.5). After 5 iterations, the best v is expanded: Linear(64→1792) followed by Sigmoid → multiplicative gate applied to EfficientNet-B4 features. FA runs every FA_UPDATE_FREQ ∈ [5,20] batches during training. Convergence observed immediately (fitness ~0.045–0.067 for DR Bio, near-zero for AMD/Glaucoma due to task saturation).",
+    "source_chapters": ["Chapter 3", "Chapter 4"]
+  },
+  {
+    "id": 50,
+    "chapter": "Chapters 3 & 4",
+    "topic": "ABC Routing Correction",
+    "question": "How does the Artificial Bee Colony algorithm optimize fusion routing in HG-MEF-Bio, and what evidence confirms it corrected the AMD Expert routing failure from Architecture 1?",
+    "answer": "The ABC algorithm optimizes a 3-dimensional routing bias vector b ∈ [−1.5, 1.5]^3 that additively shifts the gate logits: gate_weights = softmax((gate_logits · diag(a_AMD, a_GLC, a_DR) + b) / τ_gate). Colony: 20 bees (10 employed, 10 onlooker). Employed bee phase: each bee exploits its source b_i by generating candidate b_new = b_i + φ_{ij}·(b_i − b_j), φ ~ U(−1,1); if fitness improves (validation accuracy on 5-batch subset), replaces b_i, else increments failure counter. Onlooker bee phase: selects sources proportionally to fitness P_i = fitness_i / Σ_k fitness_k, then performs local exploitation around high-fitness sources. Scout bee phase: if source i stagnates for limit=5 consecutive trials, abandoned and replaced by random b_i ~ U(−1.5, 1.5)^3, maintaining exploration. ABC runs every 8 epochs during fusion training. Corrective evidence: In Architecture 1, AMD and Cataract inputs were misrouted to the Glaucoma Expert (gate weight 0.94–0.95 for Glaucoma Expert, 0.05–0.06 for AMD Expert) — a routing collapse local optimum. In HG-MEF-Bio Architecture 2, by Epoch 8 of fusion training, the ABC routing bias had been corrected: AMD and Cataract inputs were properly routed to the AMD Expert with appropriate gate weights. This was confirmed by the gate weight distribution plots (Fig 4.11) showing the ABC expert routing distribution across training.",
+    "source_chapters": ["Chapter 3", "Chapter 4"]
+  },
+  {
+    "id": 51,
+    "chapter": "Chapters 1 & 3",
+    "topic": "EfficientNet-B4 Architecture",
+    "question": "How does EfficientNet-B4 differ from ResNet-50 and ViT-B/16 in terms of scaling strategy and the type of features it contributes to the multi-backbone ensemble?",
+    "answer": "EfficientNet-B4 uses a compound scaling strategy that jointly scales network depth, width, and resolution using compound coefficients φ, rather than scaling only one dimension (depth in ResNet, token dimensions in ViT). This principled, balanced scaling produces a highly parameter-efficient network. Concretely, EfficientNet-B4 processes images at 380×380 pixels (intermediate between ResNet's 512×512 preprocessing resolution and ViT's 224×224) and produces a 1792-dimensional feature vector after global average pooling. In the three-backbone ensemble, each backbone contributes complementary feature types: ResNet-50 provides local spatial hierarchical features — edges, textures, and morphological shapes via convolutions with progressively increasing receptive fields, projecting to 768 dimensions. ViT-B/16 provides global relational features — relationships between distant image regions via self-attention over all 196 patch tokens, naturally outputting 768-dimensional [CLS] features. EfficientNet-B4 provides lesion-scale detail features at an intermediate resolution, capturing fine-grained local texture patterns (e.g., microaneurysm boundaries, drusen granularity) more efficiently than ResNet due to its optimized scaling. Together, all three 768-dimensional vectors constitute complementary feature spaces fused through cross-attention.",
+    "source_chapters": ["Chapter 1", "Chapter 3"]
+  },
+  {
+    "id": 52,
+    "chapter": "Chapters 2 & 3",
+    "topic": "GateDiversityLoss",
+    "question": "What is the mathematical formulation of GateDiversityLoss, why is entropy maximization the correct objective for preventing routing collapse, and how does this connect to findings from ensemble learning literature?",
+    "answer": "GateDiversityLoss formulation: L_GateDiversity = −H(E_batch[gate_weights]) = Σ_d ē_d·log(ē_d), where ē_d = (1/B)·Σ_n gate_weights_{n,d} is the mean gate weight for expert d across the batch B. Since entropy H(p) = −Σ p_i·log(p_i) is maximized when all probabilities are equal (uniform distribution) and minimized when probability is concentrated at one value (degenerate), minimizing L_GateDiversity (which equals the negative entropy) maximizes the entropy of the average gate distribution. High entropy average gate distribution means no single expert is receiving disproportionately high routing weight on average — all three experts are being meaningfully utilized across the dataset. Routing collapse occurs when the gate converges to a degenerate low-entropy distribution (e.g., [0.98, 0.01, 0.01]), effectively ignoring two of the three experts. λ_div=0.1 balances this against the primary classification loss. Connection to literature: Singh et al. (2025) found that ensemble diversity — measured by disagreement between component models — was the strongest predictor of ensemble generalization performance, outperforming model size or individual accuracy. GateDiversityLoss operationalizes this finding by directly enforcing diverse routing distributions during training, ensuring all experts remain active and specialized.",
+    "source_chapters": ["Chapter 2", "Chapter 3"]
+  },
+  {
+    "id": 53,
+    "chapter": "Chapters 3 & 4",
+    "topic": "Temperature Scaling & Calibration",
+    "question": "What is temperature scaling in the context of neural network calibration, how is it implemented in the expert models, and how does the differentiable ECE loss complement it?",
+    "answer": "Temperature scaling is a post-processing calibration technique that modifies the sharpness of the output probability distribution by dividing logits by a learnable scalar temperature τ: p = softmax(logits / τ). When τ > 1, the distribution becomes softer (less confident, probabilities pushed toward uniform); when τ < 1, the distribution becomes sharper (more confident, probabilities pushed toward one-hot). In the expert models, τ is initialized at 1.5 (slightly over-confident reduction) and learned during training. This allows the model to self-calibrate its overall confidence level. The differentiable ECE loss complements temperature scaling by explicitly penalizing calibration errors at a fine-grained bin level: L_ECE = Σ_{m=1}^{M} (|B_m|/n)·|acc(B_m) − conf(B_m)|, where M=10 confidence intervals are used. While temperature scaling adjusts a single global parameter affecting all predictions uniformly, ECE loss identifies and penalizes specific confidence ranges where the model is systematically over- or under-confident. Together, they provide both coarse-grained (temperature) and fine-grained (ECE) calibration. Applied at the HG-MEF-Bio fusion layer with λ_cal=0.1, the ECE loss is particularly important for the AMD branch where bimodal confidence (near 0 or 1) makes temperature scaling alone insufficient.",
+    "source_chapters": ["Chapter 3", "Chapter 4"]
+  },
+  {
+    "id": 54,
+    "chapter": "Chapters 1 & 5",
+    "topic": "Clinical Deployment Considerations",
+    "question": "What real-world deployment considerations are discussed regarding the HG-MEF-Bio system's computational requirements and the gap between benchmark performance and clinical validation?",
+    "answer": "Computational requirements: The full 3-backbone expert architecture (ResNet-50 + ViT-B/16 + EfficientNet-B4, each processing 512×512 images) requires ~16GB VRAM for training. To fit within this constraint, AMP (Automatic Mixed Precision) with bfloat16 and gradient checkpointing were both necessary for the Glaucoma Bio Expert. Inference requirements will be lower than training, but still significant for edge deployment in resource-limited settings. The thesis acknowledges this as a key limitation requiring future work on knowledge distillation to compact student models. Benchmark vs. clinical performance gap: All results are from held-out test sets of benchmark databases (EyePACS, AMDNet, ORIGA etc.), not from live clinical screening. Real-world performance could differ due to: (1) Greater variation in fundus image quality from different cameras and lighting conditions in LMICs; (2) Different patient demographics and disease presentations in real clinical populations vs. controlled research datasets; (3) Domain shift between the imaging systems used to build benchmark datasets and those used in routine tele-ophthalmology. The system has not undergone prospective clinical validation, which is identified as the most critical next step. PSO threshold tuning on the validation set is also flagged as potentially overfitting to the specific validation distribution.",
+    "source_chapters": ["Chapter 1", "Chapter 5"]
+  },
+  {
+    "id": 55,
+    "chapter": "Chapters 2 & 3",
+    "topic": "Focal Loss in Fusion Network",
+    "question": "Why is Focal Loss used as the primary classification loss in the HG-MEF and HG-MEF-Bio fusion networks rather than standard cross-entropy, and what does the focusing factor γ accomplish?",
+    "answer": "Focal Loss is used in the fusion network to address the challenge of easy vs. hard example imbalance during training. Standard cross-entropy treats all samples equally: L_CE = −log(p_t). Focal Loss adds a modulating factor: L_Focal = −Σ_n (1−p_{t,n})^γ · log(p_{t,n}), where p_t is the predicted probability for the ground-truth class and γ=2 is the focusing parameter. When γ=2, the (1−p_t)^2 factor has the following effect: For well-classified easy samples (p_t → 1): factor ≈ 0, loss is effectively zero — these samples contribute negligibly to the gradient. For hard or misclassified samples (p_t → 0): factor ≈ 1, loss ≈ standard CE — these samples drive learning. This automatically down-weights the contribution of easy majority-class samples (Normal, Cataract, NoDR — frequently predicted with high confidence) and focuses training on hard samples — especially minority DR severity classes and boundary cases. In the fusion network context, this is particularly important because the training data combines all three disease domains with very different class frequencies, and the combined fusion loss must not be dominated by the many easy NoDR/Normal samples at the expense of rare Severe DR samples.",
+    "source_chapters": ["Chapter 2", "Chapter 3"]
+  },
+  {
+    "id": 56,
+    "chapter": "Chapters 3 & 4",
+    "topic": "Differential Evolution in DEFeatureMixer",
+    "question": "Explain the DE/rand/1/bin variant used in the DEFeatureMixer: what are the mutation, crossover, and selection operations, and what does the 3-dimensional weight vector it optimizes control?",
+    "answer": "Differential Evolution (DE/rand/1/bin variant) in the DEFeatureMixer optimizes expert feature scaling weights. The 3-dimensional target vector w ∈ [0.01, 1.0]^3 represents scaling weights [w_A, w_G, w_D] for AMD, Glaucoma, and DR expert features before concatenation (softmax-normalized before use). Population: n=30 vectors. Three operations: (1) Mutation (differential mutation): for each target x_i, three randomly selected distinct vectors x_r1, x_r2, x_r3 create a mutant vector v_i = x_{r1} + F·(x_{r2} − x_{r3}), with F=0.8 (scale factor controlling mutation magnitude). The differential x_{r2} − x_{r3} provides direction based on population diversity; x_{r1} provides a random base. (2) Crossover (binomial/uniform): trial vector u_i created by u_{i,j} = v_{i,j} if rand_j(0,1) < CR else x_{i,j}, with CR=0.9 — high crossover rate means most dimensions come from the mutant, enabling aggressive exploration. (3) Selection (greedy): if fitness(u_i) ≥ fitness(x_i), u_i replaces x_i; otherwise x_i is retained — ensuring population quality never degrades. DE runs every 6 epochs for 20 generations during fusion training. The optimization determines which expert's features should be weighted more heavily in the fused representation, adaptively learning that DR features may need higher weight for severity classification while AMD features drive macular disease decisions.",
+    "source_chapters": ["Chapter 3", "Chapter 4"]
+  },
+  {
+    "id": 57,
+    "chapter": "Chapter 1",
+    "topic": "Need of Study",
+    "question": "Quantify the scale of the retinal screening deficit in LMICs and explain why AI is described as the 'only technically feasible' solution for population-scale screening.",
+    "answer": "The thesis presents the following quantification of the screening deficit: The combined at-risk populations requiring regular ophthalmic screening globally exceed 1.5 billion individuals — comprising all people with diabetes (537 million, all at risk for DR requiring annual fundus screening), those at risk for AMD (age >50 with risk factors), and those at risk for Glaucoma (elevated IOP, family history, age >40). In LMICs, which bear the largest disease burden, there are fewer than 3 ophthalmologists per 100,000 people, compared to more than 12 per 100,000 in high-income countries. India provides the starkest example: even if all 30,000 of India's ophthalmologists dedicated their entire working time to DR screening alone, they could not achieve annual fundus screening for all patients with risk factors for diabetic retinopathy. A single ophthalmologist can examine 50–100 patients per day; at 80 million diabetics in India, providing annual screening would require ~1 million ophthalmologist-days per year — far exceeding the available workforce. Therefore, AI algorithms that analyze fundus images at ophthalmologist-level accuracy are described as the only technically feasible method to enable population-scale retinal disease screening given these human resource constraints.",
+    "source_chapters": ["Chapter 1"]
+  },
+  {
+    "id": 58,
+    "chapter": "Chapters 3 & 4",
+    "topic": "Training Configuration",
+    "question": "Compare the training hyperparameters and configurations used across Architecture 1 experts, Architecture 2 Bio experts, and the HG-MEF-Bio fusion network. What key differences reflect the specific challenges of each component?",
+    "answer": "Architecture 1 Expert training: Optimizer=AdamW, LR=1e-4, weight decay=1e-4, LR scheduler=ReduceLROnPlateau (AMD/Glaucoma) or CosineAnnealingWarmRestarts (DR), batch size=8, gradient clipping=1.0, early stopping patience 8–15 epochs, no AMP. Architecture 2 Bio Expert training: Optimizer=AdamW, LR=1e-4, weight decay=1e-4, LR scheduler=CosineWarmRestarts (AMD/Glaucoma Bio) and ReduceLROnPlateau on val F1 (DR Bio), batch size=8 (AMD/DR Bio) or 16 (Glaucoma Bio), AMP bfloat16 for Glaucoma Bio only (to fit 16GB VRAM with larger batch), backbone freezing for first 5 epochs in DR Bio, early stopping patience 10–15 epochs. HG-MEF-Bio Fusion training: Optimizer=AdamW, LR=1e-4, batch size=8, expert backbones frozen (only fusion network trained), early stopping patience=10 epochs, LR scheduler=ReduceLROnPlateau on val F1. Key differences reflecting specific challenges: (1) Glaucoma Bio uses bfloat16 AMP + batch size 16 because 3 full backbones on 512×512 images exceed 16GB at standard precision with batch 8; (2) DR Bio uses ReduceLROnPlateau on macro-F1 (not loss) because class imbalance makes loss an unreliable training signal; (3) DR Bio uses 50 epochs (vs 17 for AMD) because minority class learning requires many more gradient updates to overcome imbalance effects.",
+    "source_chapters": ["Chapter 3", "Chapter 4"]
+  }
+]

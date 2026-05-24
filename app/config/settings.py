@@ -74,7 +74,7 @@ class Settings(BaseSettings):
     # ── Reranker (BGE cross-encoder) ───────────────────────────────────────────
     reranker_model: str = "BAAI/bge-reranker-large"
     reranker_top_k_input: int = 20      # Chunks fed into cross-encoder
-    reranker_top_k_output: int = 8     # Chunks returned after reranking
+    reranker_top_k_output: int = 10    # Chunks returned after reranking
     # Equation chunks get a +2.0 bonus on equation_lookup queries
     reranker_equation_boost: float = 2.0
 
@@ -86,7 +86,7 @@ class Settings(BaseSettings):
     qdrant_hnsw_m: int = 16
     qdrant_hnsw_ef_construct: int = 200
     qdrant_hnsw_ef: int = 128           # ef at query time — accuracy vs latency
-    qdrant_top_k: int = 20              # Vector ANN candidates before RRF
+    qdrant_top_k: int = 30             # Vector ANN candidates before RRF
 
     # ── BM25 ──────────────────────────────────────────────────────────────────
     bm25_index_path: str = "data/processed/bm25_index.pkl"

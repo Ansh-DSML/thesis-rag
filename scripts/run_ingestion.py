@@ -935,6 +935,25 @@ def setup_qdrant_collection(client) -> None:
     )
     log.info("  Collection created.")
 
+    from qdrant_client.models import PayloadSchemaType
+
+    for field, schema in [
+        ("source_type", PayloadSchemaType.KEYWORD),
+        ("chapter_num", PayloadSchemaType.INTEGER),
+        ("chunk_type",  PayloadSchemaType.KEYWORD),
+        ("paper_year",  PayloadSchemaType.INTEGER),
+    ]:
+        try:
+            client.create_payload_index(
+                collection_name=Config.QDRANT_COLLECTION,
+                field_name=field,
+                field_schema=schema,
+                wait=True,
+            )
+        except Exception:
+            pass  # already exists
+    log.info("Payload indexes created.")
+
 def index_chunks_qdrant(chunks: list[ProcessedChunk], embeddings: np.ndarray) -> None:
     """Stage 6 — Upsert all chunks + embeddings into Qdrant Cloud."""
     try:
