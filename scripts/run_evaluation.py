@@ -54,6 +54,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean
 from typing import Optional
+import json
+from pathlib import Path
+from ragas import EvaluationDataset, SingleTurnSample 
+from dotenv import load_dotenv
+load_dotenv()
+
+EVAL_CHECKPOINT_PATH = "data/evaluation/ragas_results/eval_checkpoint.json"
 
 # ── Path bootstrap — allow running from project root ─────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -334,7 +341,7 @@ TOP_CHUNKS_PER_CHAPTER = 10
 
 # Maximum total context strings passed to RAGAS per question.
 # Keeps token usage and latency under control.
-MAX_TOTAL_CONTEXTS = 20
+MAX_TOTAL_CONTEXTS = 10
 
 
 def _parse_chapter_refs(text: str) -> list[int]:
@@ -556,136 +563,184 @@ def build_eval_row(
 # ══════════════════════════════════════════════════════════════════════════════
 
 def build_ragas_evaluator():
-    """
-    Configure RAGAS to use Groq as judge LLM.
-    """
-
-    from ragas.metrics import (
-        faithfulness,
-        answer_relevancy,
-        context_precision,
-        context_recall,
+    from ragas.metrics.collections import (
+        Faithfulness,
+        AnswerRelevancy,
+        ContextPrecision,
+        ContextRecall,
     )
-
-    metrics = [
-        faithfulness,
-        answer_relevancy,
-        context_precision,
-        context_recall,
-    ]
+    from ragas.llms import llm_factory
+    from ragas.embeddings import HuggingFaceEmbeddings
 
     groq_key = os.getenv("GROQ_API_KEY")
-
     if not groq_key:
-        print("[WARN] GROQ_API_KEY not found in .env")
-        return metrics
+        print("[WARN] GROQ_API_KEY missing")
+        return []
 
     try:
-        from langchain_groq import ChatGroq
-        from langchain_huggingface import HuggingFaceEmbeddings
+        from openai import OpenAI
 
-        from ragas.llms import LangchainLLMWrapper
-        from ragas.embeddings import LangchainEmbeddingsWrapper
-
-        # Judge LLM
-        judge_llm = LangchainLLMWrapper(
-            ChatGroq(
-                model=os.getenv(
-                    "LLM_MODEL_MAIN",
-                    "llama-3.3-70b-versatile"
-                ),
-                groq_api_key=groq_key,
-                temperature=0,
-            )
+        # Groq is OpenAI-compatible — point the client at Groq's base URL
+        groq_client = OpenAI(
+            api_key=groq_key,
+            base_url="https://api.groq.com/openai/v1",
         )
 
-        # Embeddings for RAGAS semantic scoring
-        judge_embeddings = LangchainEmbeddingsWrapper(
-            HuggingFaceEmbeddings(
-                model_name="sentence-transformers/all-MiniLM-L6-v2"
-            )
+        judge_llm = llm_factory(
+            model="llama-3.3-70b-versatile",
+            client=groq_client,
         )
 
-        # Attach to metrics
-        for m in metrics:
-            if hasattr(m, "llm"):
-                m.llm = judge_llm
-
-            if hasattr(m, "embeddings"):
-                m.embeddings = judge_embeddings
-
-        print(
-            f"[INFO] RAGAS judge: "
-            f"{os.getenv('LLM_MODEL_MAIN')} via Groq"
+        judge_embeddings = HuggingFaceEmbeddings(
+            model="sentence-transformers/all-MiniLM-L6-v2"
         )
+
+        metrics = [
+            Faithfulness(llm=judge_llm),
+            AnswerRelevancy(llm=judge_llm, embeddings=judge_embeddings),
+            ContextPrecision(llm=judge_llm),
+            ContextRecall(llm=judge_llm),
+        ]
+
+        print("[INFO] Groq judge configured via llm_factory — llama-3.3-70b-versatile")
+        return metrics
 
     except Exception as exc:
-        print(f"[WARN] Could not configure Groq judge: {exc}")
-
-    return metrics
-
+        print(f"[WARN] Groq config failed: {exc}")
+        import traceback; traceback.print_exc()
+        return []
 
 # ══════════════════════════════════════════════════════════════════════════════
 # RAGAS EVALUATION
 # ══════════════════════════════════════════════════════════════════════════════
+def save_eval_checkpoint(
+    scores: dict[str, list],
+    completed_up_to: int,
+    run_id: str,
+    path: str = EVAL_CHECKPOINT_PATH,
+) -> None:
+    """Save evaluation progress after each batch."""
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    data = {
+        "run_id":           run_id,
+        "completed_up_to":  completed_up_to,   # index of last completed row
+        "scores":           scores,
+    }
+    Path(path).write_text(json.dumps(data, indent=2), encoding="utf-8")
+ 
+ 
+def load_eval_checkpoint(
+    run_id: str,
+    path: str = EVAL_CHECKPOINT_PATH,
+) -> tuple[dict | None, int]:
+    """
+    Load existing checkpoint if it matches the current run_id.
+ 
+    Returns:
+      (scores_dict, completed_up_to)  if checkpoint exists and matches run_id
+      (None, 0)                       if no checkpoint or different run_id
+    """
+    p = Path(path)
+    if not p.exists():
+        return None, 0
+ 
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None, 0
+ 
+    if data.get("run_id") != run_id:
+        print(f"  [INFO] Checkpoint found but belongs to run '{data.get('run_id')}' "
+              f"— current run is '{run_id}'. Starting fresh.")
+        return None, 0
+ 
+    completed = data.get("completed_up_to", 0)
+    scores    = data.get("scores", {})
+    print(f"  [INFO] Resuming from checkpoint: {completed} rows already scored.")
+    return scores, completed
 
 def run_ragas(
-    eval_rows: list[EvalRow],
+    eval_rows: list,
     metrics: list,
     batch_size: int = 5,
-) -> dict[str, list[Optional[float]]]:
+    run_id: str = "",
+) -> dict[str, list]:
     """
-    Run ragas.evaluate() and return per-question score dicts.
-
-    Returns:
-      {
-        "faithfulness":      [0.91, 0.88, None, ...],   # None = evaluation error
-        "answer_relevancy":  [...],
-        "context_precision": [...],
-        "context_recall":    [...],
-      }
-
-    Processes in batches to avoid memory / rate-limit issues.
+    Run ragas.evaluate() with checkpoint/resume support.
+ 
+    If interrupted mid-run, re-run the same command and it will
+    skip already-scored batches and continue from where it left off.
+ 
+    Checkpoint is deleted automatically on successful completion.
     """
-    from datasets import Dataset
     from ragas import evaluate as ragas_evaluate
-
+ 
     n = len(eval_rows)
-    scores: dict[str, list] = {
-        "faithfulness":      [None] * n,
-        "answer_relevancy":  [None] * n,
-        "context_precision": [None] * n,
-        "context_recall":    [None] * n,
-    }
-
+ 
+    # ── Try to resume from checkpoint ────────────────────────────────────────
+    existing_scores, resume_from = load_eval_checkpoint(run_id)
+ 
+    if existing_scores:
+        scores = existing_scores
+        # Ensure all score lists are the right length
+        for key in ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]:
+            if key not in scores or len(scores[key]) != n:
+                scores[key] = (scores.get(key, []) + [None] * n)[:n]
+    else:
+        scores = {
+            "faithfulness":      [None] * n,
+            "answer_relevancy":  [None] * n,
+            "context_precision": [None] * n,
+            "context_recall":    [None] * n,
+        }
+ 
     print(f"\n[INFO] Running RAGAS on {n} rows in batches of {batch_size} …")
-
+    if resume_from > 0:
+        print(f"[INFO] Skipping first {resume_from} rows (already scored).")
+ 
     for start in range(0, n, batch_size):
-        batch = eval_rows[start : start + batch_size]
+        # Skip batches already completed
+        if start + batch_size <= resume_from:
+            print(f"  Batch [{start+1}–{start+batch_size}] — skipped (already scored)")
+            continue
+        # Partial resume: if checkpoint is mid-batch, redo from batch start
+        # (safe because RAGAS is deterministic at temperature=0)
+ 
+        batch         = eval_rows[start : start + batch_size]
         batch_indices = list(range(start, start + len(batch)))
-
-        # Filter rows where answer is empty (API call failed)
+ 
         valid_rows   = [(i, row) for i, row in zip(batch_indices, batch) if row.answer.strip()]
         invalid_rows = [(i, row) for i, row in zip(batch_indices, batch) if not row.answer.strip()]
-
+ 
         for i, row in invalid_rows:
-            print(f"  [SKIP] {row.question_id} — empty answer (API call failed)")
-
+            print(f"  [SKIP] {row.question_id} — empty answer")
+ 
         if not valid_rows:
             continue
-
+ 
         ragas_dicts = [row.to_ragas_dict() for _, row in valid_rows]
 
-        # RAGAS requires contexts to be non-empty
         for rd in ragas_dicts:
+            rd["answer"]       = rd["answer"][:7000]
+            rd["ground_truth"] = rd["ground_truth"][:7000]
+            rd["contexts"]     = [c[:2500] for c in rd["contexts"][:8]]
             if not rd["contexts"]:
                 rd["contexts"] = ["[No context retrieved]"]
 
         try:
-            ds     = Dataset.from_list(ragas_dicts)
-            result = ragas_evaluate(ds, metrics=metrics)
+            samples = [
+                SingleTurnSample(
+                    user_input=rd["question"],
+                    response=rd["answer"],
+                    retrieved_contexts=rd["contexts"],
+                    reference=rd["ground_truth"],
+                )
+                for rd in ragas_dicts
+            ]
+            ds     = EvaluationDataset(samples=samples)
+            result = ragas_evaluate(dataset=ds, metrics=metrics)
             df     = result.to_pandas()
-
+ 
             for local_idx, (global_idx, _) in enumerate(valid_rows):
                 for metric in scores:
                     if metric in df.columns:
@@ -693,18 +748,34 @@ def run_ragas(
                         scores[metric][global_idx] = (
                             float(val) if val is not None and str(val) != "nan" else None
                         )
-
+ 
             batch_ids = [row.question_id for _, row in valid_rows]
             print(f"  Batch [{start+1}–{start+len(batch)}] done  ({', '.join(batch_ids)})")
-
+ 
+            # ── Save checkpoint after every successful batch ──────────────────
+            save_eval_checkpoint(scores, start + len(batch), run_id)
+ 
         except Exception as exc:
             print(f"  [ERROR] RAGAS batch [{start}–{start+len(batch)-1}] failed: {exc}")
-            # Individual fallback — try one by one
+            print(f"  [INFO]  Progress saved to checkpoint. "
+                  f"Re-run the same command to resume from batch {start+1}.")
+ 
+            # Individual fallback
             for global_idx, row in valid_rows:
                 try:
-                    ds_single = Dataset.from_list([row.to_ragas_dict()])
-                    result_single = ragas_evaluate(ds_single, metrics=metrics)
-                    df_single = result_single.to_pandas()
+                    rd = row.to_ragas_dict()
+                    if not rd["contexts"]:
+                        rd["contexts"] = ["[No context retrieved]"]
+                    ds_single = EvaluationDataset(samples=[
+                        SingleTurnSample(
+                            user_input=rd["question"],
+                            response=rd["answer"],
+                            retrieved_contexts=rd["contexts"],
+                            reference=rd["ground_truth"],
+                        )
+                    ])
+                    result_single = ragas_evaluate(dataset=ds_single, metrics=metrics)
+                    df_single     = result_single.to_pandas()
                     for metric in scores:
                         if metric in df_single.columns:
                             val = df_single.iloc[0][metric]
@@ -714,11 +785,19 @@ def run_ragas(
                     print(f"    ✓ Recovered {row.question_id} individually")
                 except Exception as inner_exc:
                     print(f"    ✗ {row.question_id} failed individually: {inner_exc}")
-
-        # Pause between batches to avoid Gemini rate limits
+ 
+            # Save whatever we managed to score before failing
+            save_eval_checkpoint(scores, start, run_id)
+ 
         if start + batch_size < n:
             time.sleep(2.0)
-
+ 
+    # ── Delete checkpoint on successful full completion ───────────────────────
+    cp = Path(EVAL_CHECKPOINT_PATH)
+    if cp.exists():
+        cp.unlink()
+        print(f"\n  [INFO] Checkpoint deleted (run complete).")
+ 
     return scores
 
 
@@ -1156,7 +1235,7 @@ def main() -> None:
     print(SEP)
 
     metrics    = build_ragas_evaluator()
-    score_dict = run_ragas(eval_rows, metrics, batch_size=args.batch_size)
+    score_dict = run_ragas(eval_rows, metrics, batch_size=args.batch_size, run_id=run_id) 
 
     # ── Build report ──────────────────────────────────────────────────────────
     report = build_report(eval_rows, score_dict, run_id)

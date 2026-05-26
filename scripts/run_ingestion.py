@@ -324,7 +324,10 @@ def parse_thesis_chapters(skip: bool = False) -> list[RawDocument]:
                             block_max_size = sz
 
                 full_text = " ".join(spans_text).strip()
-                if not full_text or len(full_text) < 15:
+                word_count_block = len(full_text.split())
+                if not full_text or len(full_text) < 40 or word_count_block < 8:
+                    continue
+                if re.fullmatch(r"\d{1,4}", full_text.strip()):
                     continue
 
                 synthetic_block = {"text": full_text, "size": block_max_size}
@@ -690,26 +693,61 @@ class SemanticChunker:
         return self._enforce_limits(raw_chunks)
 
     def _enforce_limits(self, chunks: list[str]) -> list[str]:
-        """Merge chunks that are too small; split chunks that are too large."""
-        # Pass 1: merge small chunks into their neighbour
+        """
+        Merge chunks that are too small; split chunks that are too large.
+ 
+        FIX: Use forward accumulation instead of backward merging.
+             The old code did `merged[-1] += chunk[i]` which left the first
+             short chunk unprotected (merged was empty → else branch ran).
+             New code accumulates into a buffer and only flushes when the
+             buffer exceeds min_tokens OR the next chunk starts a new idea.
+        """
+        # ── Pass 1: forward-accumulate to enforce min_tokens ─────────────────
         merged: list[str] = []
-        i = 0
-        while i < len(chunks):
-            t = _approx_token_count(chunks[i])
-            if t < self.min_tokens and merged:
-                merged[-1] = merged[-1] + " " + chunks[i]
+        buffer: list[str] = []
+        buffer_tokens: int = 0
+ 
+        for chunk in chunks:
+            t = _approx_token_count(chunk)
+ 
+            if buffer_tokens + t <= self.max_tokens:
+                buffer.append(chunk)
+                buffer_tokens += t
+                # Flush only when we've reached the minimum
+                if buffer_tokens >= self.min_tokens:
+                    merged.append(" ".join(buffer))
+                    buffer, buffer_tokens = [], 0
             else:
-                merged.append(chunks[i])
-            i += 1
-
-        # Pass 2: force-split chunks that exceed max_tokens
+                # Adding this chunk would exceed max — flush buffer first
+                if buffer:
+                    merged.append(" ".join(buffer))
+                buffer, buffer_tokens = [chunk], t
+                # If this single chunk is already >= min, flush immediately
+                if buffer_tokens >= self.min_tokens:
+                    merged.append(" ".join(buffer))
+                    buffer, buffer_tokens = [], 0
+ 
+        # Flush any remaining buffer
+        if buffer:
+            text = " ".join(buffer)
+            if merged:
+                # Append leftover to previous chunk only if it fits
+                candidate = merged[-1] + " " + text
+                if _approx_token_count(candidate) <= self.max_tokens:
+                    merged[-1] = candidate
+                else:
+                    merged.append(text)   # keep as-is even if small
+            else:
+                merged.append(text)
+ 
+        # ── Pass 2: force-split anything that still exceeds max_tokens ────────
         final: list[str] = []
         for chunk in merged:
             if _approx_token_count(chunk) > self.max_tokens:
                 final.extend(_force_split_large_chunk(chunk, self.max_tokens))
             else:
                 final.append(chunk)
-
+ 
         return [c.strip() for c in final if c.strip()]
 
 
@@ -717,31 +755,58 @@ def chunk_documents(
     documents: list[RawDocument],
     embed_model,
 ) -> list[ProcessedChunk]:
-    """Stage 3 — Semantically chunk all paragraphs from all documents."""
+    """Stage 3 — Semantically chunk all documents.
+ 
+    FIX: Paragraphs from the same section are joined before chunking
+    so the chunker can enforce min_tokens across paragraph boundaries.
+    This is the primary fix for the avg=45 token warning.
+    """
     chunker = SemanticChunker(
         model=embed_model,
         breakpoint_threshold=Config.CHUNK_BREAKPOINT,
         min_tokens=Config.CHUNK_MIN_TOKENS,
         max_tokens=Config.CHUNK_MAX_TOKENS,
     )
-
+ 
     all_chunks: list[ProcessedChunk] = []
-    log.info("Stage 3 — Semantic chunking ...")
-
+    log.info("Stage 3 — Semantic chunking (section-grouped) ...")
+ 
     for doc in tqdm(documents, desc="Chunking documents"):
+        # ── Group paragraphs by section heading ───────────────────────────────
+        # Each section is chunked as a unit so the chunker can merge across
+        # paragraph boundaries within the same section.
+        from collections import defaultdict
+ 
+        # Preserve section order using a list of (heading, [paragraphs]) pairs
+        section_order: list[str] = []
+        section_map: dict[str, list[dict]] = defaultdict(list)
+ 
         for para in doc.paragraphs:
-            text = para["text"]
-            if not text.strip():
+            heading = para.get("section_heading", "")
+            if heading not in section_map:
+                section_order.append(heading)
+            section_map[heading].append(para)
+ 
+        # ── Chunk each section ────────────────────────────────────────────────
+        for heading in section_order:
+            paras = section_map[heading]
+ 
+            # Join paragraphs with double newline so sentence splitter sees breaks
+            # but the chunker can still merge small ones together.
+            section_text = "\n\n".join(p["text"] for p in paras if p["text"].strip())
+            if not section_text.strip():
                 continue
-
-            sub_chunks = chunker.chunk(text)
-            meta = para.get("metadata", {})
-            section = para.get("section_heading", "")
-            page_num = para.get("page_num")
-
-            for idx, chunk_text in enumerate(sub_chunks):
+ 
+            # Representative metadata (from first paragraph of this section)
+            first_para = paras[0]
+            meta = first_para.get("metadata", {})
+            page_num = first_para.get("page_num")
+ 
+            sub_chunks = chunker.chunk(section_text)
+ 
+            for chunk_text in sub_chunks:
                 chunk_id = hashlib.sha1(chunk_text.encode()).hexdigest()[:20]
-
+ 
                 if doc.source_type == "thesis":
                     chunk = ProcessedChunk(
                         chunk_id=chunk_id,
@@ -751,7 +816,7 @@ def chunk_documents(
                         chapter_num=meta.get("chapter_num"),
                         chapter_name=meta.get("chapter_name"),
                         chapter_filename=meta.get("chapter_filename"),
-                        section_heading=section,
+                        section_heading=heading,
                         page_start=page_num,
                         token_count=_approx_token_count(chunk_text),
                         word_count=len(chunk_text.split()),
@@ -769,14 +834,14 @@ def chunk_documents(
                         paper_doi=meta.get("doi"),
                         paper_abstract=meta.get("abstract"),
                         paper_filename=meta.get("paper_filename"),
-                        section_heading=section,
+                        section_heading=heading,
                         page_start=page_num,
                         token_count=_approx_token_count(chunk_text),
                         word_count=len(chunk_text.split()),
                     )
-
+ 
                 all_chunks.append(chunk)
-
+ 
     thesis_count = sum(1 for c in all_chunks if c.source_type == "thesis")
     paper_count  = sum(1 for c in all_chunks if c.source_type == "paper")
     log.info(

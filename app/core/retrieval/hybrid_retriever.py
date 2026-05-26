@@ -231,14 +231,15 @@ class HybridRetriever:
 
         with StageTimer("vector_search", log):
             try:
-                results = await client.search(
-                    collection_name=settings.qdrant_collection_name,
-                    query_vector=query_vector.tolist(),
-                    query_filter=qdrant_filter,
-                    limit=settings.qdrant_top_k,
-                    with_payload=True,
-                    with_vectors=False,   # don't return stored vectors (saves bandwidth)
-                )
+                response = await client.query_points(
+                collection_name=settings.qdrant_collection_name,
+                query=query_vector.tolist(),        # ← query_vector → query
+                query_filter=qdrant_filter,
+                limit=settings.qdrant_top_k,
+                with_payload=True,
+                with_vectors=False,
+            )
+                results = response.points 
             except Exception as exc:
                 log.error("vector_search_failed", error=str(exc))
                 return []
