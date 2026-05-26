@@ -56,7 +56,8 @@ from statistics import mean
 from typing import Optional
 import json
 from pathlib import Path
-from ragas import EvaluationDataset, SingleTurnSample 
+from datasets import Dataset
+from ragas import EvaluationDataset, SingleTurnSample
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -563,51 +564,50 @@ def build_eval_row(
 # ══════════════════════════════════════════════════════════════════════════════
 
 def build_ragas_evaluator():
-    from ragas.metrics.collections import (
-        Faithfulness,
-        AnswerRelevancy,
-        ContextPrecision,
-        ContextRecall,
-    )
-    from ragas.llms import llm_factory
-    from ragas.embeddings import HuggingFaceEmbeddings
-
     groq_key = os.getenv("GROQ_API_KEY")
+
     if not groq_key:
         print("[WARN] GROQ_API_KEY missing")
         return []
 
     try:
-        from openai import OpenAI
+        # IMPORTANT
+        os.environ["OPENAI_API_KEY"] = groq_key
+        os.environ["OPENAI_BASE_URL"] = "https://api.groq.com/openai/v1"
 
-        # Groq is OpenAI-compatible — point the client at Groq's base URL
-        groq_client = OpenAI(
-            api_key=groq_key,
-            base_url="https://api.groq.com/openai/v1",
+        from ragas.metrics import (
+            Faithfulness,
+            AnswerRelevancy,
+            ContextPrecision,
+            ContextRecall,
         )
 
-        judge_llm = llm_factory(
-            model="llama-3.3-70b-versatile",
-            client=groq_client,
-        )
+        from ragas.llms import LangchainLLMWrapper
+        from langchain_groq import ChatGroq
 
-        judge_embeddings = HuggingFaceEmbeddings(
-            model="sentence-transformers/all-MiniLM-L6-v2"
+        judge_llm = LangchainLLMWrapper(
+            ChatGroq(
+                model="llama-3.3-70b-versatile",
+                temperature=0,
+                api_key=groq_key,
+            )
         )
 
         metrics = [
             Faithfulness(llm=judge_llm),
-            AnswerRelevancy(llm=judge_llm, embeddings=judge_embeddings),
+            AnswerRelevancy(llm=judge_llm),
             ContextPrecision(llm=judge_llm),
             ContextRecall(llm=judge_llm),
         ]
 
-        print("[INFO] Groq judge configured via llm_factory — llama-3.3-70b-versatile")
+        print("[INFO] RAGAS evaluator configured with explicit Groq judge")
+
         return metrics
 
     except Exception as exc:
-        print(f"[WARN] Groq config failed: {exc}")
-        import traceback; traceback.print_exc()
+        print(f"[WARN] RAGAS evaluator setup failed: {exc}")
+        import traceback
+        traceback.print_exc()
         return []
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -728,17 +728,8 @@ def run_ragas(
                 rd["contexts"] = ["[No context retrieved]"]
 
         try:
-            samples = [
-                SingleTurnSample(
-                    user_input=rd["question"],
-                    response=rd["answer"],
-                    retrieved_contexts=rd["contexts"],
-                    reference=rd["ground_truth"],
-                )
-                for rd in ragas_dicts
-            ]
-            ds     = EvaluationDataset(samples=samples)
-            result = ragas_evaluate(dataset=ds, metrics=metrics)
+            ds     = Dataset.from_list(ragas_dicts)
+            result = ragas_evaluate(ds, metrics=metrics)
             df     = result.to_pandas()
  
             for local_idx, (global_idx, _) in enumerate(valid_rows):
@@ -766,15 +757,8 @@ def run_ragas(
                     rd = row.to_ragas_dict()
                     if not rd["contexts"]:
                         rd["contexts"] = ["[No context retrieved]"]
-                    ds_single = EvaluationDataset(samples=[
-                        SingleTurnSample(
-                            user_input=rd["question"],
-                            response=rd["answer"],
-                            retrieved_contexts=rd["contexts"],
-                            reference=rd["ground_truth"],
-                        )
-                    ])
-                    result_single = ragas_evaluate(dataset=ds_single, metrics=metrics)
+                    ds_single     = Dataset.from_list([rd])
+                    result_single = ragas_evaluate(ds_single, metrics=metrics)
                     df_single     = result_single.to_pandas()
                     for metric in scores:
                         if metric in df_single.columns:
