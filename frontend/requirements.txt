@@ -1,0 +1,23 @@
+# frontend/requirements.txt
+# ─────────────────────────────────────────────────────────────────────────────
+# Dependencies for the Streamlit frontend ONLY.
+# No ML models, no embeddings, no heavy inference libraries here.
+# The frontend image stays small (~200MB) — all heavy work runs on EC2.
+#
+# Install locally:
+#   pip install -r frontend/requirements.txt
+#
+# Used by:
+#   Dockerfile.frontend  (Docker image)
+#   Streamlit Community Cloud  (reads this file automatically if placed at
+#   the repo root OR if you point Cloud to frontend/requirements.txt)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Core UI framework ─────────────────────────────────────────────────────────
+streamlit==1.45.1           # Pin to a stable release; Cloud auto-installs this
+
+# ── HTTP client (used by api_client.py to call FastAPI backend) ───────────────
+httpx==0.27.2               # Sync client only — no async needed in Streamlit
+
+# ── Environment variables (local dev — reads frontend/.env) ──────────────────
+python-dotenv==1.0.1        # Used by config.py fallback for local API_URL

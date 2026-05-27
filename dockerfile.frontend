@@ -1,0 +1,40 @@
+# Dockerfile.frontend
+# ─────────────────────────────────────────────────────────────────────────────
+# Lightweight image for the Streamlit frontend.
+# No ML models — just Streamlit + httpx. Final image ~200MB.
+#
+# Build:  docker build -f Dockerfile.frontend -t thesis-rag-frontend .
+# Run:    docker run -p 8501:8501 -e API_URL=http://localhost:8000 thesis-rag-frontend
+# ─────────────────────────────────────────────────────────────────────────────
+
+FROM python:3.12-slim
+
+# ── System deps ───────────────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+ curl \
+ && rm -rf /var/lib/apt/lists/*
+
+# ── Working directory ─────────────────────────────────────────────────────────
+WORKDIR /app
+
+# ── Install Python deps first (layer-cached unless requirements change) ───────
+COPY frontend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ── Copy frontend source ──────────────────────────────────────────────────────
+COPY frontend/ .
+
+# ── Streamlit runtime config ──────────────────────────────────────────────────
+# .streamlit/config.toml is already copied above via COPY frontend/ .
+# API_URL is injected at runtime via environment variable (see docker-compose).
+
+EXPOSE 8501
+
+# Healthcheck — Streamlit exposes /_stcore/health
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+ CMD curl -f http://localhost:8501/_stcore/health || exit 1
+
+ENTRYPOINT ["streamlit", "run", "app.py", \
+ "--server.port=8501", \
+ "--server.address=0.0.0.0", \
+ "--server.headless=true"]

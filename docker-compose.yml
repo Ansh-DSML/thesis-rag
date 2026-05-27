@@ -72,6 +72,37 @@ services:
     profiles:
       - production
 
+  # ── Frontend (Streamlit) ───────────────────────────────────────────────────
+  # Profile: frontend
+  #
+  # In PRODUCTION: do NOT start this — Streamlit Community Cloud hosts the
+  # frontend for free. This service is for local end-to-end testing only.
+  #
+  # Start locally:
+  #   docker compose --profile frontend up frontend
+  #
+  # API_URL points to the FastAPI app service inside the Docker network.
+  # On EC2 you would set API_URL=http://your-ec2-ip:8000 instead.
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://app:8000      # 'app' resolves inside Docker network
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - frontend                     # Never starts with plain `docker compose up`
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   qdrant_storage:
   redis_data:

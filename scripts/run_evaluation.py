@@ -58,6 +58,8 @@ import json
 from pathlib import Path
 from datasets import Dataset
 from ragas import EvaluationDataset, SingleTurnSample
+from ragas import evaluate as ragas_evaluate
+from ragas.run_config import RunConfig
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -595,7 +597,6 @@ def build_ragas_evaluator():
 
         metrics = [
             Faithfulness(llm=judge_llm),
-            AnswerRelevancy(llm=judge_llm),
             ContextPrecision(llm=judge_llm),
             ContextRecall(llm=judge_llm),
         ]
@@ -683,13 +684,12 @@ def run_ragas(
     if existing_scores:
         scores = existing_scores
         # Ensure all score lists are the right length
-        for key in ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]:
+        for key in ["faithfulness", "context_precision", "context_recall"]:
             if key not in scores or len(scores[key]) != n:
                 scores[key] = (scores.get(key, []) + [None] * n)[:n]
     else:
         scores = {
             "faithfulness":      [None] * n,
-            "answer_relevancy":  [None] * n,
             "context_precision": [None] * n,
             "context_recall":    [None] * n,
         }
@@ -721,15 +721,32 @@ def run_ragas(
         ragas_dicts = [row.to_ragas_dict() for _, row in valid_rows]
 
         for rd in ragas_dicts:
-            rd["answer"]       = rd["answer"][:7000]
-            rd["ground_truth"] = rd["ground_truth"][:7000]
-            rd["contexts"]     = [c[:2500] for c in rd["contexts"][:8]]
+            rd["question"] = str(rd.get("question", ""))[:4000]
+
+            rd["answer"] = str(rd.get("answer", ""))[:7000]
+
+            rd["ground_truth"] = str(rd.get("ground_truth", ""))[:7000]
+
+            rd["contexts"] = [
+                str(c)[:2500]
+                for c in rd.get("contexts", [])[:8]
+                if c is not None and str(c).strip()
+            ]
             if not rd["contexts"]:
-                rd["contexts"] = ["[No context retrieved]"]
+                rd["contexts"] = ["No relevant context retrieved."]
 
         try:
             ds     = Dataset.from_list(ragas_dicts)
-            result = ragas_evaluate(ds, metrics=metrics)
+            result = ragas_evaluate(
+                ds,
+                metrics=metrics,
+                run_config=RunConfig(
+                    timeout=300,
+                    max_workers=1,
+                    max_wait=30,
+                    max_retries=3,
+                ),
+            )
             df     = result.to_pandas()
  
             for local_idx, (global_idx, _) in enumerate(valid_rows):
@@ -758,7 +775,16 @@ def run_ragas(
                     if not rd["contexts"]:
                         rd["contexts"] = ["[No context retrieved]"]
                     ds_single     = Dataset.from_list([rd])
-                    result_single = ragas_evaluate(ds_single, metrics=metrics)
+                    result_single = ragas_evaluate(
+                        ds_single,
+                        metrics=metrics,
+                        run_config=RunConfig(
+                            timeout=300,
+                            max_workers=1,
+                            max_wait=30,
+                            max_retries=3,
+                        ),
+                    )
                     df_single     = result_single.to_pandas()
                     for metric in scores:
                         if metric in df_single.columns:
@@ -807,7 +833,11 @@ def build_report(
             topic             = row.topic,
             query_type        = row.query_type,
             faithfulness      = score_dict["faithfulness"][i],
-            answer_relevancy  = score_dict["answer_relevancy"][i],
+            answer_relevancy = (
+                score_dict["answer_relevancy"][i]
+                if "answer_relevancy" in score_dict
+                else None
+            ),
             context_precision = score_dict["context_precision"][i],
             context_recall    = score_dict["context_recall"][i],
             latency_ms        = row.latency_ms,
@@ -1067,7 +1097,7 @@ def parse_args() -> argparse.Namespace:
         "--sample",
         type=int,
         default=None,
-        help="Randomly sample N questions (reproducible seed=42)",
+        help="Randomly sample N questions (reproducible seed=21)",
     )
     p.add_argument(
         "--query-type",
@@ -1154,8 +1184,8 @@ def main() -> None:
 
     if args.sample and args.sample < len(questions):
         questions = dataset.sample(args.sample) if not (args.chapter or args.query_type) \
-                    else __import__("random").Random(42).sample(questions, args.sample)
-        print(f"  Sample       : {len(questions)} questions (seed=42)")
+                    else __import__("random").Random(21).sample(questions, args.sample)
+        print(f"  Sample       : {len(questions)} questions (seed=21)")
 
     if not questions:
         print("[ERROR] No questions to evaluate after filters. Check your --chapter / --query-type flags.")

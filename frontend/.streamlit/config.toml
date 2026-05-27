@@ -1,0 +1,32 @@
+# frontend/.streamlit/config.toml
+# ─────────────────────────────────────────────────────────────────────────────
+# Streamlit configuration for the Thesis RAG frontend.
+# Controls theme, server settings, and browser behaviour.
+#
+# Local dev  : this file is picked up automatically by Streamlit.
+# Docker     : mounted into the container at /app/.streamlit/config.toml.
+# Streamlit Cloud : committed to the repo — Cloud reads it automatically.
+# ─────────────────────────────────────────────────────────────────────────────
+
+[theme]
+# Clean research / medical aesthetic — matches the ophthalmic AI domain
+primaryColor             = "#185FA5"   # Medical blue — used for buttons, sliders, links
+backgroundColor          = "#FFFFFF"   # Pure white main canvas
+secondaryBackgroundColor = "#F7F8FA"   # Very light grey — sidebar + code blocks
+textColor                = "#1A1A2E"   # Near-black — high contrast for readability
+font                     = "sans serif"
+
+[server]
+port                 = 8501
+headless             = true            # Required for Docker and Streamlit Community Cloud
+enableCORS           = false           # FastAPI backend handles CORS separately
+enableXsrfProtection = true
+maxUploadSize        = 10              # MB — file upload not used, but good to set explicitly
+
+[browser]
+gatherUsageStats = false               # Disable Streamlit telemetry
+serverAddress    = "localhost"
+serverPort       = 8501
+
+[runner]
+magicEnabled = false                   # Disable implicit st.write() magic — be explicit

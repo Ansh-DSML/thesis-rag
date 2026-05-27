@@ -73,8 +73,8 @@ class Settings(BaseSettings):
 
     # ── Reranker (BGE cross-encoder) ───────────────────────────────────────────
     reranker_model: str = "BAAI/bge-reranker-large"
-    reranker_top_k_input: int = 20      # Chunks fed into cross-encoder
-    reranker_top_k_output: int = 10    # Chunks returned after reranking
+    reranker_top_k_input: int = 10      # Chunks fed into cross-encoder
+    reranker_top_k_output: int = 5   # Chunks returned after reranking
     # Equation chunks get a +2.0 bonus on equation_lookup queries
     reranker_equation_boost: float = 2.0
 
@@ -86,17 +86,17 @@ class Settings(BaseSettings):
     qdrant_hnsw_m: int = 16
     qdrant_hnsw_ef_construct: int = 200
     qdrant_hnsw_ef: int = 128           # ef at query time — accuracy vs latency
-    qdrant_top_k: int = 30             # Vector ANN candidates before RRF
+    qdrant_top_k: int = 10             # Vector ANN candidates before RRF
 
     # ── BM25 ──────────────────────────────────────────────────────────────────
     bm25_index_path: str = "data/processed/bm25_index.pkl"
-    bm25_top_k: int = 500               # BM25 candidates before RRF merge
+    bm25_top_k: int = 20              # BM25 candidates before RRF merge
 
     # ── Hybrid retrieval — RRF ────────────────────────────────────────────────
     # RRF score = rrf_vector_weight × 1/(rrf_k + vector_rank)
     #           + rrf_bm25_weight  × 1/(rrf_k + bm25_rank)
-    rrf_vector_weight: float = 0.6
-    rrf_bm25_weight: float = 0.4
+    rrf_vector_weight: float = 0.7
+    rrf_bm25_weight: float = 0.3
     rrf_k: int = 60                     # RRF smoothing constant (60 is standard)
 
     # ── Knowledge graph ───────────────────────────────────────────────────────
