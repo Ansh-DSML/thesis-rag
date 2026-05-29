@@ -24,7 +24,6 @@
 .cache/
 huggingface/
 hub/
-models/
 hf_cache/
 model_cache/
 .hf_cache/  

@@ -1,0 +1,528 @@
+"""
+app/models/evaluation.py
+
+Pydantic models for the RAGAS evaluation pipeline.
+
+Model hierarchy:
+  EvalQuestion  ← loaded from data/evaluation/test_questions.json
+  EvalRow       ← built after calling POST /chat (question + generated answer + contexts + ground_truth)
+  RAGASResult   ← RAGAS scores for one EvalRow
+  EvalReport    ← aggregate scores across all questions, with per-type and per-chapter breakdowns
+
+test_questions.json field mapping:
+  "id"              → EvalQuestion.id
+  "chapter"         → EvalQuestion.chapter          (e.g. "Chapter 1 – Introduction")
+  "topic"           → EvalQuestion.topic            (e.g. "Background / Global Burden")
+  "question"        → EvalQuestion.question
+  "answer"          → EvalQuestion.ground_truth     (renamed for clarity — this is the reference answer)
+  "source_chapters" → EvalQuestion.source_chapters  (e.g. ["Chapter 1"])
+  "query_type"      → EvalQuestion.query_type       (optional — may not be in all entries)
+
+Context strategy for RAGAS:
+  RAGAS needs full chunk text (not 200-char snippets) to accurately score
+  context_precision and context_recall. run_evaluation.py pre-loads
+  chunks_with_metadata.json and looks up full text by chunk_id from citations.
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+from statistics import mean
+from typing import Optional
+
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 1. EVAL QUESTION  — mirrors test_questions.json exactly
+# ══════════════════════════════════════════════════════════════════════════════
+
+class EvalQuestion(BaseModel):
+    """
+    One QA pair from test_questions.json.
+    Field names match the JSON keys your file uses.
+    """
+
+    id: int = Field(..., description="Stable question ID — never changes between runs.")
+    chapter: str = Field(
+        ...,
+        description="Chapter label e.g. 'Chapter 1 – Introduction'",
+    )
+    topic: str = Field(
+        ...,
+        description="Topic within the chapter e.g. 'Background / Global Burden'",
+    )
+    question: str
+    ground_truth: str = Field(
+        ...,
+        alias="answer",
+        description=(
+            "Reference answer written by you. "
+            "RAGAS compares the generated answer against this. "
+            "Stored as 'answer' in the JSON file — aliased to ground_truth here."
+        ),
+    )
+    source_chapters: list[str] = Field(
+        default_factory=list,
+        description="Chapters the answer should draw from e.g. ['Chapter 3']",
+    )
+
+    # Optional fields — include in your JSON if you want per-type score breakdown
+    query_type: Optional[str] = Field(
+        default=None,
+        description=(
+            "One of: factual | comparative | synthesis | methodology | "
+            "equation | algorithm. Used to group RAGAS scores by query type."
+        ),
+    )
+    expected_entities: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Entity names expected in the answer e.g. ['PSO', 'GA']. "
+            "Used for post-hoc analysis, not passed to RAGAS."
+        ),
+    )
+
+    model_config = {"populate_by_name": True}   # allows both "answer" and "ground_truth"
+
+    @field_validator("question", "ground_truth", mode="before")
+    @classmethod
+    def _strip_whitespace(cls, v: str) -> str:
+        return str(v).strip()
+
+    @computed_field
+    @property
+    def chapter_num(self) -> Optional[int]:
+        """Extract chapter number from string like 'Chapter 3 – Methodology' → 3."""
+        import re
+        m = re.search(r"Chapter\s+(\d+)", self.chapter, re.IGNORECASE)
+        return int(m.group(1)) if m else None
+
+    @computed_field
+    @property
+    def question_id(self) -> str:
+        """Zero-padded string ID for consistent sorting e.g. 'q001'."""
+        return f"q{self.id:03d}"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 2. EVAL ROW  — RAGAS input format (built after calling POST /chat)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class EvalRow(BaseModel):
+    """
+    One complete RAGAS input row.
+
+    Built by run_evaluation.py after:
+      1. Calling POST /chat to get the generated answer
+      2. Looking up full chunk text for each cited chunk_id
+         (from pre-loaded chunks_with_metadata.json)
+
+    The four RAGAS-required fields are:
+      question, answer, contexts, ground_truth
+
+    Everything else is metadata for grouping / debugging.
+    """
+
+    # ── Identifiers ───────────────────────────────────────────────────────────
+    question_id: str         # e.g. "q001"
+    numeric_id: int
+
+    # ── RAGAS required fields ─────────────────────────────────────────────────
+    question: str
+    answer: str              # generated by POST /chat
+    contexts: list[str]      # full text of retrieved chunks (NOT 200-char snippets)
+    ground_truth: str        # from EvalQuestion.ground_truth
+
+    # ── Metadata for analysis ─────────────────────────────────────────────────
+    chapter: str
+    topic: str
+    query_type: Optional[str]      = None
+    source_chapters: list[str]     = Field(default_factory=list)
+    cited_chunk_ids: list[str]     = Field(default_factory=list)
+    citation_keys: list[str]       = Field(default_factory=list)
+    cache_hit: bool                = False
+    kg_used: bool                  = False
+    hyde_used: bool                = False
+    latency_ms: Optional[float]    = None
+    token_usage: int               = 0
+
+    @computed_field
+    @property
+    def context_count(self) -> int:
+        return len(self.contexts)
+
+    @computed_field
+    @property
+    def answer_length(self) -> int:
+        return len(self.answer.split())
+
+    def to_ragas_dict(self) -> dict:
+        """
+        Convert to the flat dict format expected by RAGAS datasets.Dataset.
+
+        RAGAS expects:
+          question    : str
+          answer      : str
+          contexts    : list[str]
+          ground_truth: str
+        """
+        return {
+            "question": str(self.question or "").strip(),
+            "answer": str(self.answer or "").strip(),
+            "contexts": [
+                str(c).strip()
+                for c in self.contexts
+                if c is not None and str(c).strip()
+            ],
+            "ground_truth": str(self.ground_truth or "").strip(),
+        }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 3. RAGAS RESULT  — per-question scores
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Score thresholds for pass/fail assessment
+THRESHOLDS = {
+    "faithfulness":       0.90,
+    "answer_relevancy":   0.85,
+    "context_precision":  0.80,
+    "context_recall":     0.75,
+}
+
+
+class RAGASResult(BaseModel):
+    """
+    RAGAS scores for one EvalRow.
+
+    All scores are in [0.0, 1.0]. Higher is better.
+
+    Metric definitions:
+      faithfulness      — Are all claims in the answer supported by the context?
+                          Measures hallucination. Target > 0.90.
+      answer_relevancy  — Does the answer actually address the question?
+                          Measures drift / off-topic answers. Target > 0.85.
+      context_precision — Of the retrieved chunks, what fraction were needed?
+                          Measures retrieval noise. Target > 0.80.
+      context_recall    — Does the retrieved context cover the ground truth?
+                          Measures retrieval completeness. Target > 0.75.
+    """
+
+    # ── Identity ──────────────────────────────────────────────────────────────
+    question_id: str
+    numeric_id: int
+    question: str
+    chapter: str
+    topic: str
+    query_type: Optional[str] = None
+
+    # ── RAGAS scores ──────────────────────────────────────────────────────────
+    faithfulness:       Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    answer_relevancy:   Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    context_precision:  Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    context_recall:     Optional[float] = Field(default=None, ge=0.0, le=1.0)
+
+    # ── Runtime info ──────────────────────────────────────────────────────────
+    latency_ms: Optional[float]  = None
+    token_usage: int             = 0
+    cache_hit: bool              = False
+    kg_used: bool                = False
+    context_count: int           = 0
+    error: Optional[str]         = None   # set if RAGAS evaluation failed for this row
+    evaluated_at: datetime       = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @computed_field
+    @property
+    def mean_score(self) -> Optional[float]:
+        """Average of all four RAGAS metrics (None if any metric is missing)."""
+        scores = [
+            self.faithfulness,
+            self.answer_relevancy,
+            self.context_precision,
+            self.context_recall,
+        ]
+        valid = [s for s in scores if s is not None]
+        if len(valid) < 4:
+            return None
+        return round(mean(valid), 4)
+
+    @computed_field
+    @property
+    def passed(self) -> bool:
+        """
+        True if ALL four metrics meet their threshold targets.
+        Thresholds: faithfulness>0.90, relevancy>0.85, precision>0.80, recall>0.75
+        """
+        checks = [
+            self.faithfulness      is not None and self.faithfulness      >= THRESHOLDS["faithfulness"],
+            self.answer_relevancy  is not None and self.answer_relevancy  >= THRESHOLDS["answer_relevancy"],
+            self.context_precision is not None and self.context_precision >= THRESHOLDS["context_precision"],
+            self.context_recall    is not None and self.context_recall    >= THRESHOLDS["context_recall"],
+        ]
+        return all(checks)
+
+    @computed_field
+    @property
+    def failing_metrics(self) -> list[str]:
+        """Returns names of metrics below threshold — useful for targeted debugging."""
+        failing = []
+        if self.faithfulness      is not None and self.faithfulness      < THRESHOLDS["faithfulness"]:
+            failing.append("faithfulness")
+        if self.answer_relevancy  is not None and self.answer_relevancy  < THRESHOLDS["answer_relevancy"]:
+            failing.append("answer_relevancy")
+        if self.context_precision is not None and self.context_precision < THRESHOLDS["context_precision"]:
+            failing.append("context_precision")
+        if self.context_recall    is not None and self.context_recall    < THRESHOLDS["context_recall"]:
+            failing.append("context_recall")
+        return failing
+
+    def score_row(self) -> str:
+        """One-line summary for terminal output."""
+        ms = self.mean_score
+        status = "✓" if self.passed else "✗"
+        return (
+            f"{status} {self.question_id} [{self.query_type or '?':12s}] "
+            f"F={self.faithfulness or 0:.2f} "
+            f"R={self.answer_relevancy or 0:.2f} "
+            f"P={self.context_precision or 0:.2f} "
+            f"C={self.context_recall or 0:.2f} "
+            f"avg={ms or 0:.2f}"
+        )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 4. EVAL REPORT  — aggregate results across all questions
+# ══════════════════════════════════════════════════════════════════════════════
+
+class EvalReport(BaseModel):
+    """
+    Full evaluation report: per-question scores + aggregates + breakdowns.
+    Saved to data/evaluation/ragas_results/ after each run.
+    """
+
+    # ── Run metadata ──────────────────────────────────────────────────────────
+    run_id: str = Field(..., description="Timestamp-based run identifier e.g. '2026-05-23T21-12-15'")
+    evaluated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    total_questions: int
+    successful: int          # questions where RAGAS returned all 4 scores
+    failed: int              # questions where RAGAS failed / errored
+    passed_count: int        # questions where all 4 metrics met thresholds
+
+    # ── Pipeline config snapshot (for comparing runs) ─────────────────────────
+    llm_model_main: str    = ""
+    llm_model_router: str  = ""
+    embedding_model: str   = ""
+    reranker_model: str    = ""
+    qdrant_top_k: int      = 0
+    reranker_top_k: int    = 0
+    rrf_vector_weight: float = 0.6
+    hyde_alpha: float      = 0.5
+
+    # ── All results ───────────────────────────────────────────────────────────
+    results: list[RAGASResult] = Field(default_factory=list)
+
+    # ── Aggregate scores ──────────────────────────────────────────────────────
+    avg_faithfulness:       Optional[float] = None
+    avg_answer_relevancy:   Optional[float] = None
+    avg_context_precision:  Optional[float] = None
+    avg_context_recall:     Optional[float] = None
+    avg_mean_score:         Optional[float] = None
+    avg_latency_ms:         Optional[float] = None
+
+    @computed_field
+    @property
+    def pass_rate(self) -> float:
+        if not self.total_questions:
+            return 0.0
+        return round(self.passed_count / self.total_questions, 4)
+
+    def by_query_type(self) -> dict[str, dict]:
+        """
+        Per-query-type score averages.
+        Returns: {"factual": {"faithfulness": 0.91, ...}, "synthesis": {...}, ...}
+        """
+        from collections import defaultdict
+        groups: dict[str, list[RAGASResult]] = defaultdict(list)
+        for r in self.results:
+            qt = r.query_type or "unknown"
+            groups[qt].append(r)
+
+        breakdown = {}
+        for qt, rows in sorted(groups.items()):
+            def _avg(metric: str) -> Optional[float]:
+                vals = [getattr(r, metric) for r in rows if getattr(r, metric) is not None]
+                return round(mean(vals), 4) if vals else None
+
+            breakdown[qt] = {
+                "count":              len(rows),
+                "pass_count":         sum(1 for r in rows if r.passed),
+                "faithfulness":       _avg("faithfulness"),
+                "answer_relevancy":   _avg("answer_relevancy"),
+                "context_precision":  _avg("context_precision"),
+                "context_recall":     _avg("context_recall"),
+                "mean_score":         _avg("mean_score") if False else (
+                    round(mean([r.mean_score for r in rows if r.mean_score is not None]), 4)
+                    if any(r.mean_score is not None for r in rows) else None
+                ),
+            }
+        return breakdown
+
+    def by_chapter(self) -> dict[str, dict]:
+        """Per-chapter score averages."""
+        from collections import defaultdict
+        groups: dict[str, list[RAGASResult]] = defaultdict(list)
+        for r in self.results:
+            groups[r.chapter].append(r)
+
+        breakdown = {}
+        for ch, rows in sorted(groups.items()):
+            def _avg(metric: str) -> Optional[float]:
+                vals = [getattr(r, metric) for r in rows if getattr(r, metric) is not None]
+                return round(mean(vals), 4) if vals else None
+
+            breakdown[ch] = {
+                "count":             len(rows),
+                "faithfulness":      _avg("faithfulness"),
+                "answer_relevancy":  _avg("answer_relevancy"),
+                "context_precision": _avg("context_precision"),
+                "context_recall":    _avg("context_recall"),
+            }
+        return breakdown
+
+    def weakest_questions(self, n: int = 5) -> list[RAGASResult]:
+        """Return the n lowest-scoring questions by mean_score — for targeted improvement."""
+        scored = [r for r in self.results if r.mean_score is not None]
+        return sorted(scored, key=lambda r: r.mean_score)[:n]
+
+    def summary_dict(self) -> dict:
+        """Flat dict for terminal printing and CSV header row."""
+        return {
+            "run_id":               self.run_id,
+            "total_questions":      self.total_questions,
+            "successful":           self.successful,
+            "pass_rate":            self.pass_rate,
+            "avg_faithfulness":     self.avg_faithfulness,
+            "avg_answer_relevancy": self.avg_answer_relevancy,
+            "avg_context_precision":self.avg_context_precision,
+            "avg_context_recall":   self.avg_context_recall,
+            "avg_mean_score":       self.avg_mean_score,
+            "avg_latency_ms":       self.avg_latency_ms,
+            "llm_model_main":       self.llm_model_main,
+            "qdrant_top_k":         self.qdrant_top_k,
+            "reranker_top_k":       self.reranker_top_k,
+        }
+
+    def save(self, output_dir: str = "data/evaluation/ragas_results") -> tuple[str, str]:
+        """
+        Save report as JSON + CSV.
+        Returns (json_path, csv_path).
+        """
+        import csv
+        out_dir = Path(output_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        safe_run_id = self.run_id.replace(":", "-").replace(" ", "_")
+
+        # JSON — full report
+        json_path = out_dir / f"results_{safe_run_id}.json"
+        json_path.write_text(
+            self.model_dump_json(indent=2),
+            encoding="utf-8",
+        )
+
+        # CSV — one row per question (for Excel analysis)
+        csv_path = out_dir / f"results_{safe_run_id}.csv"
+        fieldnames = [
+            "question_id", "chapter", "topic", "query_type",
+            "faithfulness", "answer_relevancy", "context_precision", "context_recall",
+            "mean_score", "passed", "latency_ms", "token_usage",
+            "cache_hit", "kg_used", "context_count", "error",
+        ]
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for r in self.results:
+                writer.writerow({
+                    "question_id":      r.question_id,
+                    "chapter":          r.chapter,
+                    "topic":            r.topic,
+                    "query_type":       r.query_type or "",
+                    "faithfulness":     r.faithfulness,
+                    "answer_relevancy": r.answer_relevancy,
+                    "context_precision":r.context_precision,
+                    "context_recall":   r.context_recall,
+                    "mean_score":       r.mean_score,
+                    "passed":           r.passed,
+                    "latency_ms":       r.latency_ms,
+                    "token_usage":      r.token_usage,
+                    "cache_hit":        r.cache_hit,
+                    "kg_used":          r.kg_used,
+                    "context_count":    r.context_count,
+                    "error":            r.error or "",
+                })
+
+        return str(json_path), str(csv_path)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 5. DATASET LOADER  — reads test_questions.json
+# ══════════════════════════════════════════════════════════════════════════════
+
+class EvalDataset(BaseModel):
+    """
+    Loads and validates the full test_questions.json file.
+    Handles both single-object and array-of-objects JSON formats.
+    """
+
+    questions: list[EvalQuestion] = Field(default_factory=list)
+
+    @classmethod
+    def from_json(cls, path: str) -> EvalDataset:
+        """
+        Load questions from a JSON file.
+
+        Supports two formats:
+          Format A: top-level list       [ {...}, {...} ]
+          Format B: object with key      { "questions": [ {...} ] }
+                    or any other wrapper object containing a list value
+        """
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
+
+        if isinstance(raw, list):
+            items = raw
+        elif isinstance(raw, dict):
+            # Find the first list value in the dict
+            items = None
+            for v in raw.values():
+                if isinstance(v, list):
+                    items = v
+                    break
+            if items is None:
+                raise ValueError(
+                    f"Could not find a list of questions in {path}. "
+                    "Expected a JSON array or an object with a list value."
+                )
+        else:
+            raise ValueError(f"Unexpected JSON root type: {type(raw)}")
+
+        questions = [EvalQuestion.model_validate(item) for item in items]
+        return cls(questions=questions)
+
+    @property
+    def total(self) -> int:
+        return len(self.questions)
+
+    def by_query_type(self, qt: str) -> list[EvalQuestion]:
+        return [q for q in self.questions if q.query_type == qt]
+
+    def by_chapter_num(self, num: int) -> list[EvalQuestion]:
+        return [q for q in self.questions if q.chapter_num == num]
+
+    def sample(self, n: int, seed: int = 42) -> list[EvalQuestion]:
+        """Return n randomly sampled questions (reproducible with seed)."""
+        import random
+        rng = random.Random(seed)
+        return rng.sample(self.questions, min(n, len(self.questions)))
