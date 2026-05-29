@@ -103,7 +103,7 @@ class AppConfig:
         "Diseases":    "AMD · Diabetic Retinopathy · Glaucoma",
         "Chapters":    "6 thesis chapters",
         "Papers":      "Up to 30 research papers",
-        "Chunks":      "2,765 indexed chunks",
+        "Chunks":      "689 indexed chunks",
         "Embeddings":  "BAAI/bge-large-en-v1.5 (1024-dim)",
         "Retrieval":   "Hybrid vector + BM25 + Knowledge Graph",
         "Reranker":    "BAAI/bge-reranker-large (cross-encoder)",

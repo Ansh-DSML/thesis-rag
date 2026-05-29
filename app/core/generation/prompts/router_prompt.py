@@ -112,6 +112,9 @@ Output: {{"query_type":"synthesis","entities":["diabetic retinopathy"],"use_grap
 Query: "What was the test accuracy on the DRIVE dataset?"
 Output: {{"query_type":"factual","entities":["DRIVE","accuracy"],"use_graph":false,"use_hyde":true,"source_filter":"thesis","chapter_filter":4}}
 
+Query: "What is the PSO velocity update equation for DR threshold optimisation?"
+Output: {{"query_type":"equation","entities":["PSO","DR"],"use_graph":false,"use_hyde":false,"source_filter":"thesis","chapter_filter":3}}
+
 ━━━ CONVERSATION CONTEXT (last turn, may be empty) ━━━━━━━━━━━━━━━━━━━━━━━━
 {last_turn}
 
