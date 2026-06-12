@@ -64,6 +64,16 @@ def _query_cache_key(query: str, session_id: str) -> str:
     return f"cache:query:{digest}"
 
 
+def _static_cache_key(query: str) -> str:
+    """
+    Cache key for pre-warmed / suggested queries.
+    Session-independent — same question from ANY user = cache hit.
+    No TTL — persists until explicitly flushed.
+    """
+    digest = hashlib.sha256(query.strip().lower().encode()).hexdigest()
+    return f"cache:static:{digest}"
+
+
 def _embedding_cache_key(text: str) -> str:
     """
     Cache key for a text embedding.
@@ -196,6 +206,47 @@ class RedisCache:
         key = _query_cache_key(query, session_id)
         return await self._delete(key)
 
+    # ── Static cache (pre-warmed suggested queries) ───────────────────────────
+
+    async def get_static_query(self, query: str) -> Optional[dict]:
+        """
+        Look up a pre-warmed response for this query.
+        Session-independent — keyed only by normalised query text.
+        Returns the response dict if found, None on miss.
+        """
+        key = _static_cache_key(query)
+        raw = await self._get_raw(key)
+        if raw is None:
+            return None
+        try:
+            result = json.loads(raw.decode("utf-8"))
+            log.info("static_cache_hit", query_preview=query[:40])
+            return result
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            log.warning("static_cache_corrupt", key=key[:20], error=str(exc))
+            await self._delete(key)
+            return None
+
+    async def set_static_query(self, query: str, response: dict) -> bool:
+        """
+        Store a pre-warmed response permanently (no TTL).
+        Used by scripts/warmup_cache.py for suggested questions.
+        """
+        key = _static_cache_key(query)
+        try:
+            raw = json.dumps(response, ensure_ascii=False).encode("utf-8")
+        except (TypeError, ValueError) as exc:
+            log.warning("static_cache_serialize_failed", error=str(exc))
+            return False
+        try:
+            # SET without TTL — persists until explicitly deleted
+            await self._client.set(key, raw)
+            log.info("static_query_cached", query_preview=query[:40])
+            return True
+        except Exception as exc:
+            log.warning("static_cache_set_failed", error=str(exc))
+            return False
+
     # ── Embedding cache ───────────────────────────────────────────────────────
 
     async def get_embedding(self, text: str) -> Optional[np.ndarray]:
@@ -257,6 +308,10 @@ class RedisCache:
     async def flush_all_queries(self) -> int:
         """Clear the entire query cache namespace."""
         return await self.flush_pattern("cache:query:*")
+
+    async def flush_all_static(self) -> int:
+        """Clear all pre-warmed static query responses."""
+        return await self.flush_pattern("cache:static:*")
 
     async def flush_all_embeddings(self) -> int:
         """Clear the entire embedding cache namespace."""

@@ -135,8 +135,25 @@ class RAGPipeline:
             session_id=request.session_id,
         )
 
-        # ── Step 1: Redis cache check ─────────────────────────────────────────
+        # ── Step 0: Static cache check (pre-warmed suggested queries) ────────
         cache = await get_cache()
+        static_data = await cache.get_static_query(request.query)
+        if static_data:
+            response = QueryResponse.model_validate(static_data)
+            response = response.model_copy(update={
+                "cache_hit": True,
+                "session_id": request.session_id,   # patch to match current session
+                "query": request.query,
+                "latency_ms": round((time.perf_counter() - total_start) * 1000, 2),
+            })
+            log.info(
+                "pipeline_static_cache_hit",
+                latency_ms=round((time.perf_counter() - total_start) * 1000, 2),
+                query_preview=request.query[:40],
+            )
+            return response
+
+        # ── Step 1: Redis cache check (session-bound) ─────────────────────────
         cached_data = await cache.get_query(request.query, request.session_id)
         if cached_data:
             response = QueryResponse.model_validate(cached_data)
